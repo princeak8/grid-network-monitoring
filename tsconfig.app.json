@@ -1,0 +1,33 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "target": "ES2015",
+    "lib": ["DOM", "ES2015", "ESNext"],
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+   "composite": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    // "noUncheckedSideEffectImports": true
+  },
+  // "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": [
+       "src/**/*.ts",
+       "src/**/*.d.ts",
+       "src/**/*.tsx",
+       "src/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

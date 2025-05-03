@@ -1,0 +1,25 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "target": "ES2015",
+    "lib": ["DOM", "ES2015", "ESNext"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": [
+       "src/**/*.ts",
+       "src/**/*.d.ts",
+       "src/**/*.tsx",
+       "src/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
