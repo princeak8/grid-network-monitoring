@@ -42,16 +42,17 @@ import {
 } from '../utils';
 
 const props = defineProps<{
-  station: any,
-  startStationDrag: (event: MouseEvent, station: any) => void,
-  startResize: (event: MouseEvent, station: Station, type: string) => void,
-  stations: Station[],
-  newConnection: any,
-  draggedElement: any,
-  dragOffsetX: any,
-  dragOffsetY: any,
-  connections: Connection[],
-  connectionMode: boolean
+  id: string;
+  stations: Station[];
+  station: Station;
+  startStationDrag: (event: MouseEvent, station: Station) => void;
+  dragOffsetX: number;
+  dragOffsetY: number;
+  startResize: (event: MouseEvent, station: Station, type: string) => void;
+  newConnection: any; // Replace 'any' with proper type
+  connections: Connection[];
+  connectionMode: boolean;
+  draggedElement: { line: Line; station: Station } | null;
 }>();
 
 const emit = defineEmits(['updateDraggedElement', 'updateConnectionMode', 'updateDragOffsetX', 'updateDragOffsetY']);

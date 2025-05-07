@@ -1,398 +1,446 @@
 <template>
-  <div class="container">
-    
-    <svg class="grid-canvas" :width="svgCanvas.width" :height="svgCanvas.height">
-      <!-- Grid background (optional) -->
-      <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eee" stroke-width="1"/>
-      </pattern>
-      <rect width="100%" height="100%" fill="url(#grid)" />
-      <!-- Iterate through all stations -->
+  <div class="app-container">
+    <!-- Navigation sidebar (only shown when authenticated) -->
+    <nav v-if="isAuthenticated" class="sidebar" :class="{ 'collapsed': sidebarCollapsed }">
+      <div class="sidebar-header">
+        <div class="app-logo">
+          <svg width="40" height="40" viewBox="0 0 60 60">
+            <path d="M30 5L5 30h10v25h30V30h10L30 5z" fill="#4CAF50" />
+            <circle cx="30" cy="20" r="5" fill="#FFC107" />
+            <circle cx="20" cy="35" r="3" fill="#FFC107" />
+            <circle cx="40" cy="35" r="3" fill="#FFC107" />
+            <path d="M25 30v15h10V30h-10z" fill="#333" />
+          </svg>
+          <h1 v-if="!sidebarCollapsed">Power Grid</h1>
+        </div>
+        <button class="sidebar-toggle" @click="toggleSidebar">
+          <span class="toggle-icon">{{ sidebarCollapsed ? '≡' : '×' }}</span>
+        </button>
+      </div>
       
-      <StationBox v-for="station in stations" :id="station.id" :stations="stations" :station="station" :startStationDrag="startStationDrag" :dragOffsetX="dragOffsetX" :dragOffsetY="dragOffsetY"
-          :startResize="startResize" :newConnection="newConnection" :connections="connections" :connectionMode="connectionMode" :draggedElement="draggedElement" 
-          @updateDraggedElement="updateDraggedElement" @updateConnectionMode="updateConnectionMode" @updateDragOffsetX="updateDragOffsetX" @updateDragOffsetY="updateDragOffsetY"   
-      />
-
-      <!-- Connection paths -->
-      <ConnectionComponent :connections="connections" :newConnection="newConnection" />
-
-    </svg>
+      <div class="nav-links">
+        <router-link to="/dashboard" class="nav-link">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Dashboard</span>
+        </router-link>
+        <router-link to="/grid-map" class="nav-link">
+          <span class="nav-icon">🗺️</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Grid Map</span>
+        </router-link>
+        <router-link to="/stations" class="nav-link">
+          <span class="nav-icon">⚡</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Stations</span>
+        </router-link>
+        <router-link to="/outages" class="nav-link">
+          <span class="nav-icon">🚨</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Outages</span>
+        </router-link>
+      </div>
+      
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">{{ userInitials }}</div>
+          <div v-if="!sidebarCollapsed" class="user-details">
+            <div class="user-name">{{ userFullName }}</div>
+            <div class="user-role">{{ userRole }}</div>
+          </div>
+        </div>
+        <button class="logout-button" @click="logout">
+          <span class="logout-icon">🚪</span>
+          <span v-if="!sidebarCollapsed" class="logout-text">Logout</span>
+        </button>
+      </div>
+    </nav>
+    
+    <!-- Main content area -->
+    <main class="main-content" :class="{ 'with-sidebar': isAuthenticated, 'sidebar-collapsed': sidebarCollapsed }">
+      <!-- App Header (only shown when authenticated) -->
+      <header v-if="isAuthenticated" class="app-header">
+        <div class="header-content">
+          <h2 class="page-title">{{ currentPageTitle }}</h2>
+          <div class="header-actions">
+            <div class="system-status">
+              <div class="status-indicator" :class="systemStatus.color"></div>
+              <span>{{ systemStatus.text }}</span>
+            </div>
+            <div class="current-time">{{ currentTime }}</div>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Router view for page content -->
+      <div class="page-content">
+        <router-view />
+      </div>
+    </main>
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue';
-import stationData from './data/stations';
-import connectionsData from './data/connections';
-import {
-  loadStations,
-  updateStationPosition,
-  updateStationSize,
-  updateLinePosition,
-  getFromLocalStorage,
-  loadConnections,
-  saveConnectionsToLocalStorage
-} from './utils';
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useAuthStore } from './stores/auth';
 
-import { fetchStations } from './apiUtils';
+// Store and router
+const authStore = useAuthStore();
+const router = useRouter();
+const route = useRoute();
 
-
-// Define interfaces as requested
-import type { Station, Line, Connection } from "./types";
-import StationBox from "./components/StationBox.vue"
-import ConnectionComponent from "./components/Connection.vue"
-import { lineWidth, lineHeight, stationPadding, connectionColor, connectionStrokeWidth, canvasWidth, canvasHeight, canvasPadding } from "./constants";
-
-// Static dimensions for stations and lines
-const stationMinWidth = 20;
-const stationMinHeight = 20;
-
-// SVG canvas dimensions (dynamic now)
-const svgCanvas = reactive({
-  width: canvasWidth,
-  height: canvasHeight,
-  padding: canvasPadding // Padding to ensure room for elements
+// State
+const sidebarCollapsed = ref(false);
+const currentTime = ref(new Date().toLocaleTimeString());
+const systemStatus = ref({
+  text: 'System Online',
+  color: 'green'
 });
 
-// Array of stations
-const stations = ref<Station[]>([])
+// Computed properties
+const isAuthenticated = computed(() => authStore.isAuthenticated);
+const userInitials = computed(() => authStore.userInitials);
+const userFullName = computed(() => authStore.userFullName);
+const userRole = computed(() => authStore.user?.role || '');
 
-// Array of connections between lines
-const connections = ref<Connection[]>([]);
-
-// Connection being created (if any)
-const newConnection = reactive({
-  isCreating: false,
-  fromStation: null as Station | null,
-  fromLine: null as Line | null,
-  fromSide: null as string | null,
-  tempEndX: 0,
-  tempEndY: 0
+const currentPageTitle = computed(() => {
+  const routeName = route.name?.toString() || '';
+  
+  // Map route names to friendly titles
+  const titleMap: Record<string, string> = {
+    'Dashboard': 'Dashboard',
+    'GridMap': 'Grid Map',
+    'Stations': 'Power Stations',
+    'Outages': 'Outage Management',
+    'Login': 'Login',
+    'NotFound': 'Page Not Found'
+  };
+  
+  return titleMap[routeName] || routeName;
 });
 
-// Define current dragging and resizing state
-const draggedElement = ref<{ line: Line, station: Station } | null>(null);
-const draggedStation = ref<Station | null>(null);
-const dragOffsetX = ref(0);
-const dragOffsetY = ref(0);
-const draggingStation = ref(false);
-const resizing = ref(false);
-const resizeType = ref(''); // 'width', 'height', or 'corner'
-const initialResize = reactive({ x: 0, y: 0, width: 0, height: 0 });
-const initialStationDrag = reactive({ x: 0, y: 0, stationX: 0, stationY: 0 });
-
-// Define connection mode
-const connectionMode = ref(false);
-
-// Station boundaries
-
-
-const updateDraggedElement = (val) => draggedElement.value = val;
-const updateConnectionMode = (val) => connectionMode.value = val;
-const updateDragOffsetX = (val) => dragOffsetX.value = val;
-const updateDragOffsetY = (val) => dragOffsetY.value = val;
-
-// Calculate the required SVG size based on all stations' positions and dimensions
-const updateCanvasSize = () => {
-  // Find the rightmost and bottommost edges of all stations
-  let maxRight = 0;
-  let maxBottom = 0;
-  
-  stations.value.forEach(station => {
-    const stationRight = station.x + station.width;
-    const stationBottom = station.y + station.height;
-    
-    maxRight = Math.max(maxRight, stationRight);
-    maxBottom = Math.max(maxBottom, stationBottom);
-  });
-  
-  // Ensure canvas is big enough to fit all stations plus padding
-  svgCanvas.width = Math.max(svgCanvas.width, maxRight + svgCanvas.padding);
-  svgCanvas.height = Math.max(svgCanvas.height, maxBottom + svgCanvas.padding);
+// Methods
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value;
+  localStorage.setItem('sidebar-collapsed', sidebarCollapsed.value.toString());
 };
 
+const logout = () => {
+  authStore.logout();
+  router.push('/login');
+};
 
-// Watch for changes in any station's position or size
-watch(stations, () => {
-  updateCanvasSize();
-}, { deep: true });
-
-// Start dragging a station
-const startStationDrag = (event: MouseEvent, station: Station) => {
-  // Only proceed if we're not in connection mode
-  if (connectionMode.value) return;
+// Update system status periodically (in a real app, this would come from an API)
+const checkSystemStatus = () => {
+  const statuses = [
+    { text: 'System Online', color: 'green' },
+    { text: 'Minor Issues', color: 'yellow' },
+    { text: 'Maintenance Mode', color: 'blue' }
+  ];
   
-  // Only drag if clicking directly on the station itself (not lines or handles)
-  if (event.target instanceof Element && event.target.tagName === 'rect' && event.target.classList.contains('station-rect')) {
-    event.preventDefault();
-    draggingStation.value = true;
-    draggedStation.value = station;
-    
-    initialStationDrag.x = event.clientX;
-    initialStationDrag.y = event.clientY;
-    initialStationDrag.stationX = station.x;
-    initialStationDrag.stationY = station.y;
-    
-    document.addEventListener('mousemove', dragStation);
-    document.addEventListener('mouseup', endStationDrag);
+  // 90% chance of system being online for demo purposes
+  const random = Math.random();
+  if (random < 0.9) {
+    systemStatus.value = statuses[0];
+  } else if (random < 0.95) {
+    systemStatus.value = statuses[1];
+  } else {
+    systemStatus.value = statuses[2];
   }
 };
 
-// Handle station dragging
-const dragStation = (event: MouseEvent) => {
-  if (!draggingStation.value || !draggedStation.value) return;
-  
-  const deltaX = event.clientX - initialStationDrag.x;
-  const deltaY = event.clientY - initialStationDrag.y;
-  
-  // Calculate new position (prevent negative coordinates)
-  draggedStation.value.x = Math.max(0, initialStationDrag.stationX + deltaX);
-  draggedStation.value.y = Math.max(0, initialStationDrag.stationY + deltaY);
-  
-  // Update canvas size if needed
-  updateCanvasSize();
+// Timer for clock updates
+let clockTimer: number | null = null;
+let statusTimer: number | null = null;
+
+// Update clock every second
+const updateClock = () => {
+  currentTime.value = new Date().toLocaleTimeString();
 };
 
-// End station dragging
-const endStationDrag = () => {
-  if (draggedStation.value) {
-    // Save position to localStorage when station dragging ends
-    updateStationPosition(stations.value, draggedStation.value.id, draggedStation.value.x, draggedStation.value.y);
-  }
-
-  draggingStation.value = false;
-  draggedStation.value = null;
-  document.removeEventListener('mousemove', dragStation);
-  document.removeEventListener('mouseup', endStationDrag);
-};
-
-// Start resizing a station
-const startResize = (event: MouseEvent, station: Station, type: string) => {
-  // Only proceed if we're not in connection mode
-  if (connectionMode.value) return;
-  
-  event.preventDefault();
-  event.stopPropagation();
-  
-  resizing.value = true;
-  draggedStation.value = station;
-  resizeType.value = type;
-  
-  // Store initial mouse position and station dimensions
-  initialResize.x = event.clientX;
-  initialResize.y = event.clientY;
-  initialResize.width = station.width;
-  initialResize.height = station.height;
-  
-  document.addEventListener('mousemove', resize);
-  document.addEventListener('mouseup', endResize);
-};
-
-// Handle resizing movement
-const resize = (event: MouseEvent) => {
-  if (!resizing.value || !draggedStation.value) return;
-  
-  const station = draggedStation.value;
-  const deltaX = event.clientX - initialResize.x;
-  const deltaY = event.clientY - initialResize.y;
-  
-  if (resizeType.value === 'width' || resizeType.value === 'corner') {
-    const newWidth = Math.max(stationMinWidth, initialResize.width + deltaX);
-    station.width = newWidth;
+// Setup and cleanup
+onMounted(() => {
+  // Restore sidebar state
+  const savedState = localStorage.getItem('sidebar-collapsed');
+  if (savedState !== null) {
+    sidebarCollapsed.value = savedState === 'true';
   }
   
-  if (resizeType.value === 'height' || resizeType.value === 'corner') {
-    const newHeight = Math.max(stationMinHeight, initialResize.height + deltaY);
-    station.height = newHeight;
-  }
+  // Start clock
+  clockTimer = window.setInterval(updateClock, 1000);
   
-  // Ensure lines stay within the station boundaries after resize
-  station.lines.forEach(line => {
-    if (line.x + lineWidth > station.width - stationPadding) {
-      line.x = Math.max(stationPadding, station.width - lineWidth - stationPadding);
-    }
-    if (line.y + lineHeight > station.height - stationPadding) {
-      line.y = Math.max(stationPadding, station.height - lineHeight - stationPadding);
-    }
-  });
+  // Check system status every 30 seconds
+  checkSystemStatus();
+  statusTimer = window.setInterval(checkSystemStatus, 30000);
   
-  // Update canvas size if needed
-  updateCanvasSize();
-};
-
-// End resizing
-const endResize = () => {
-  if (resizing.value && draggedStation.value) {
-    // Save station size to localStorage when resizing ends
-    updateStationSize(stations.value, draggedStation.value.id, draggedStation.value.width, draggedStation.value.height);
-    
-    // Also update line positions if they were affected by the resize
-    draggedStation.value.lines.forEach(line => {
-      updateLinePosition(stations.value, draggedStation.value.id, line.id, line.x, line.y);
-    });
+  // Load user profile if authenticated
+  if (isAuthenticated.value) {
+    // authStore.fetchUserProfile();
   }
+});
 
-  resizing.value = false;
-  draggedStation.value = null;
-  document.removeEventListener('mousemove', resize);
-  document.removeEventListener('mouseup', endResize);
-};
-
-// Function to update connection references after stations are loaded
-const updateConnectionReferences = () => {
-  connections.value.forEach(connection => {
-    // Update fromStation and fromLine references
-    if (connection.fromStation) {
-      const newFromStation = stations.value.find(s => s.id === connection.fromStation.id);
-      if (newFromStation) {
-        connection.fromStation = newFromStation;
-        
-        // Update fromLine reference
-        if (connection.fromLine) {
-          const newFromLine = newFromStation.lines.find(l => l.id === connection.fromLine.id);
-          if (newFromLine) {
-            connection.fromLine = newFromLine;
-          }
-        }
-      }
-    }
-    
-    // Update toStation and toLine references
-    if (connection.toStation) {
-      const newToStation = stations.value.find(s => s.id === connection.toStation.id);
-      if (newToStation) {
-        connection.toStation = newToStation;
-        
-        // Update toLine reference
-        if (connection.toLine) {
-          const newToLine = newToStation.lines.find(l => l.id === connection.toLine.id);
-          if (newToLine) {
-            connection.toLine = newToLine;
-          }
-        }
-      }
-    }
-  });
-};
-
-// Initialize on component mounted
-onMounted(async () => {
-  await fetchStations();
-  stations.value = await loadStations();
-  connections.value = await loadConnections(stations.value);
-  // console.log("connections:", connections.value);
-  // Load connections from localStorage or use default
-  // const storedConnections = getConnectionsFromLocalStorage(stations.value);
-  // connections.value = storedConnections.length > 0 ? storedConnections : connectionsData;
-  updateConnectionReferences();
-  updateCanvasSize();
-
+onBeforeUnmount(() => {
+  // Clear timers
+  if (clockTimer !== null) {
+    clearInterval(clockTimer);
+  }
+  if (statusTimer !== null) {
+    clearInterval(statusTimer);
+  }
 });
 </script>
 
-<style scoped>
-.station-name {
-  font-weight: bold;
+<style>
+/* Global styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 16px;
+  color: #333;
+  background-color: #f5f7fa;
+  line-height: 1.6;
 }
 
-.grid-canvas {
-  border: #333 solid thin;
-  background: #fafafa;
+.app-container {
+  display: flex;
+  min-height: 100vh;
 }
 
-.station-group {
-  cursor: move;
-}
-
-.station-group:not(:hover) .resize-handle {
-  opacity: 0;
-}
-
-.draggable-line {
-  cursor: move;
-}
-
-.draggable-line:hover rect {
-  fill: #c0e0ff;
-}
-
-.resize-handle {
-  cursor: nwse-resize;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.station-group:hover .resize-handle {
-  opacity: 1;
-}
-
-.container {
-  overflow: auto;
-  width: 100%;
-  height: 100%;
+/* Sidebar Styles */
+.sidebar {
+  width: 250px;
+  background-color: #1e293b;
+  color: #fff;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
+  z-index: 10;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
 }
 
-.toolbar {
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar-header {
+  padding: 15px;
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #2d3748;
+  height: 70px;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
   gap: 10px;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-bottom: 1px solid #ddd;
 }
 
-.toolbar-btn {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
+.app-logo h1 {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.sidebar-toggle {
+  background: none;
   border: none;
-  border-radius: 4px;
+  color: #fff;
+  font-size: 1.5rem;
   cursor: pointer;
+  padding: 5px;
 }
 
-.toolbar-btn:hover {
-  background-color: #45a049;
+.nav-links {
+  flex: 1;
+  padding: 15px 0;
+  overflow-y: auto;
 }
 
-.toolbar-btn.active {
-  background-color: #f39c12;
+.nav-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #cbd5e0;
+  text-decoration: none;
+  gap: 12px;
+  transition: background-color 0.2s;
 }
 
-.connection-point {
-  fill: #3498db;
-  stroke: #2980b9;
-  stroke-width: 2;
-  cursor: crosshair;
-  opacity: 0.8;
+.nav-link:hover, .nav-link.router-link-active {
+  background-color: #2d3748;
+  color: #fff;
 }
 
-.connection-point:hover {
-  fill: #e74c3c;
-  transform: scale(1.2);
+.nav-icon {
+  font-size: 1.2rem;
+  min-width: 24px;
+  text-align: center;
 }
 
-.connection-path {
-  pointer-events: stroke;
+.sidebar-footer {
+  padding: 15px;
+  border-top: 1px solid #2d3748;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: #a0aec0;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: #cbd5e0;
+  padding: 8px 0;
   cursor: pointer;
+  width: 100%;
+  text-align: left;
 }
 
-.connection-path:hover {
-  stroke-width: 5;
+.logout-button:hover {
+  color: #fff;
 }
 
-.connections-layer {
-  pointer-events: none;
+/* Main Content Styles */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
 }
 
-.connections-layer path {
-  pointer-events: stroke;
+.main-content.with-sidebar {
+  margin-left: 250px;
 }
 
-.temp-connection-path {
-  pointer-events: none;
+.main-content.with-sidebar.sidebar-collapsed {
+  margin-left: 70px;
+}
+
+.app-header {
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.page-title {
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.status-indicator.green {
+  background-color: #4CAF50;
+}
+
+.status-indicator.yellow {
+  background-color: #FFC107;
+}
+
+.status-indicator.red {
+  background-color: #F44336;
+}
+
+.status-indicator.blue {
+  background-color: #2196F3;
+}
+
+.current-time {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.page-content {
+  padding: 20px;
+  flex: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 70px;
+  }
+  
+  .sidebar .nav-text,
+  .sidebar .user-details,
+  .sidebar .logout-text,
+  .sidebar .app-logo h1 {
+    display: none;
+  }
+  
+  .main-content.with-sidebar {
+    margin-left: 70px;
+  }
+  
+  .sidebar-toggle {
+    display: none;
+  }
 }
 </style>
