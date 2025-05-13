@@ -1,39 +1,46 @@
 <template>
   <div class="px-6 py-8">
     <h1 class="text-2xl font-bold mb-6">Stations Management</h1>
-    
+
     <!-- Search Field -->
-    <div class="mb-6">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search stations..."
-        class="w-full md:w-1/3 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        @input="filterStations"
-      />
-    </div>
-    
+    <section class="w-full flex items-center justify-between">
+      <div class="mb-6 w-full md:w-6/12">
+        <input v-model="searchQuery" type="text" placeholder="Search stations..."
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          @input="filterStations" />
+      </div>
+      <button @click="setModal" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md">
+        <Plus class="w-6 h-6 text-blue-500" /> Add Station
+      </button>
+    </section>
+
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-8">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
     </div>
-    
+
     <!-- Error State -->
     <div v-else-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
       <p>{{ error }}</p>
     </div>
-    
+
     <!-- Table -->
     <div v-else class="overflow-x-auto bg-white rounded-lg shadow">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S/N</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voltage Level</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. of Lines</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S/N
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name
+            </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Voltage Level</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Location</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.
+              of Lines</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Action</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -65,12 +72,53 @@
         </tbody>
       </table>
     </div>
+
+    <section v-if="modal " class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
+      <el-card class="max-w-sm mx-auto w-[30rem]">
+        <template #header>
+          <h2 class="text-lg font-semibold">Add Station</h2>
+        </template>
+        <form class="space-y-2">
+          <div class="grid">
+            <label for="name">Name:</label>
+            <input id="name" name="name" type="text" class="border border-black-500 rounded-lg p-2 w-full" />
+          </div>
+          <div class="grid">
+            <label for="identifier">Identifier:</label>
+            <input id="identifier" name="identifier" type="text"
+              class="border border-black-500 rounded-lg p-2 w-full" />
+          </div>
+          <div class="grid">
+            <label for="voltageLevel">Voltage Level:</label>
+            <input id="voltageLevel" name="voltageLevel" type="text"
+              class="border border-black-500 rounded-lg p-2 w-full" />
+          </div>
+          <div class="grid">
+            <label for="display">Display:</label>
+            <select id="display" name="display" type="text" class="border border-black-500 rounded-lg p-2 w-full">
+              <option value="true">True</option>
+              <option value="false">False</option>
+            </select>
+          </div>
+        </form>
+
+
+
+        <template #footer>
+          <el-button type="danger" @click="onAction">Cancel</el-button>
+          <el-button type="primary" @click="onAction">Add</el-button>
+        </template>
+      </el-card>
+    </section>
+
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import { fetchAllStations } from '@/apiUtils';
+import { Plus } from 'lucide-vue-next';
+
 
 export default {
   name: 'StationsView',
@@ -80,7 +128,10 @@ export default {
       filteredStations: [],
       searchQuery: '',
       loading: true,
-      error: null
+      error: null,
+      components: {
+        Plus,
+      },
     };
   },
   mounted() {
@@ -107,9 +158,9 @@ export default {
         this.filteredStations = [...this.stations];
         return;
       }
-      
+
       const query = this.searchQuery.toLowerCase();
-      this.filteredStations = this.stations.filter(station => 
+      this.filteredStations = this.stations.filter(station =>
         station.name.toLowerCase().includes(query) ||
         station.location.toLowerCase().includes(query) ||
         station.voltageLevel.toString().includes(query)
