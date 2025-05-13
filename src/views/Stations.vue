@@ -3,14 +3,14 @@
     <h1 class="text-2xl font-bold mb-6">Stations Management</h1>
 
     <!-- Search Field -->
-    <section class="w-full flex items-center justify-between">
-      <div class="mb-6 w-full md:w-6/12">
+    <section class="mb-6 w-full flex items-center justify-between">
+      <div class="w-full md:w-6/12">
         <input v-model="searchQuery" type="text" placeholder="Search stations..."
           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           @input="filterStations" />
       </div>
-      <button @click="setModal" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md">
-        <Plus class="w-6 h-6 text-blue-500" /> Add Station
+      <button @click="setModal" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md flex gap-2">
+        <Plus class="w-6 h-6" /> Add Station
       </button>
     </section>
 
@@ -73,7 +73,8 @@
       </table>
     </div>
 
-    <section v-if="modal " class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
+    <section v-if="modal"
+      class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
       <el-card class="max-w-sm mx-auto w-[30rem]">
         <template #header>
           <h2 class="text-lg font-semibold">Add Station</h2>
@@ -81,32 +82,29 @@
         <form class="space-y-2">
           <div class="grid">
             <label for="name">Name:</label>
-            <input id="name" name="name" type="text" class="border border-black-500 rounded-lg p-2 w-full" />
+            <input id="name" v-model="name" type="text" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
             <label for="identifier">Identifier:</label>
-            <input id="identifier" name="identifier" type="text"
-              class="border border-black-500 rounded-lg p-2 w-full" />
+            <input id="identifier" v-model="identifier" type="text" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
             <label for="voltageLevel">Voltage Level:</label>
-            <input id="voltageLevel" name="voltageLevel" type="text"
-              class="border border-black-500 rounded-lg p-2 w-full" />
+            <input id="voltageLevel" v-model.number="voltageLevel" type="number" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
             <label for="display">Display:</label>
-            <select id="display" name="display" type="text" class="border border-black-500 rounded-lg p-2 w-full">
-              <option value="true">True</option>
-              <option value="false">False</option>
+            <select id="display" v-model="display" class="border rounded-lg p-2 w-full">
+              <option :value="true">True</option>
+              <option :value="false">False</option>
             </select>
           </div>
         </form>
 
-
-
         <template #footer>
           <el-button type="danger" @click="onAction">Cancel</el-button>
-          <el-button type="primary" @click="onAction">Add</el-button>
+          <el-button type="primary" @click="submit">Add</el-button>
+          <p>{{ message }}</p>
         </template>
       </el-card>
     </section>
@@ -116,43 +114,99 @@
 
 <script>
 import axios from 'axios';
+import { ref } from 'vue';
 import { fetchAllStations } from '@/apiUtils';
 import { Plus } from 'lucide-vue-next';
+import { ElCard, ElButton } from 'element-plus';
+import 'element-plus/dist/index.css';
+import { createStation } from '@/services/stationService' 
+import { getStations } from '@/services/stationService';
+
+const name = ref('');
+const identifier = ref('');
+const voltageLevel = ref('');
+const display = ref(true);
+const message = ref('');
+
+const submit = async () => {
+  try {
+    const { data } = await createStation({
+      name: name.value,
+      identifier: identifier.value,
+      voltageLevel: voltageLevel.value,
+      display: display.value,
+    });
+    message.value = `Station created with ID ${data.id}`;
+  } catch (err) {
+    console.error(err);
+    message.value = 'Failed to create station';
+  }
+};
 
 
 export default {
   name: 'StationsView',
+  components: { Plus, ElCard, ElButton },
   data() {
     return {
+      name: '',
+      identifier: '',
+      voltageLevel: null,
+      display: true,
+      message: '',
       stations: [],
       filteredStations: [],
       searchQuery: '',
       loading: true,
       error: null,
-      components: {
-        Plus,
-      },
-    };
+      modal: false,
+    }
   },
   mounted() {
     this.fetchStations();
   },
-  methods: {
-    async fetchStations() {
+
+    methods: {
+    async submit() {
       try {
-        this.loading = true;
-        // Replace with your actual API endpoint
-        const response = await fetchAllStations();
-        console.log("response", response);
-        this.stations = response;
-        this.filteredStations = [...this.stations];
-        this.loading = false;
+        const { data } = await createStation({
+          name: this.name,
+          identifier: this.identifier,
+          voltageLevel: this.voltageLevel,
+          display: this.display,
+        })
+        this.message = `Station created with ID ${data.id}`
+        this.modal = false
+        this.fetchStations() 
       } catch (err) {
-        this.error = 'Failed to load stations. Please try again later.';
-        this.loading = false;
-        console.error('Error fetching stations:', err);
+        console.error(err)
+        this.message = 'Failed to create station'
       }
     },
+
+    setModal() {
+      this.modal = true;
+    },
+
+    onAction() {
+      this.modal = false;
+    },
+
+    async fetchStations() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const stations = await getStations();
+        this.stations = stations;
+        this.filteredStations = [...stations];
+      } catch (err) {
+        console.error(err);
+        this.error = 'Unable to load stations.';
+      } finally {
+        this.loading = false;
+      }
+    },
+
     filterStations() {
       if (!this.searchQuery) {
         this.filteredStations = [...this.stations];
