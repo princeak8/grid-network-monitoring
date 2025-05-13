@@ -14,6 +14,17 @@ export async function fetchStations(): Promise<Station[] | null> {
     }
 }
 
+export async function fetchAllStations(): Promise<Station[] | null> {
+  try {
+      const res = await apiService.get('/stations');
+      // console.log("res:", res);
+      return res.data;
+  } catch (e) {
+      console.log("error: ", e);
+      return null; // Return null on error instead of undefined
+  }
+}
+
 export async function fetchConnections(): Promise<Connection[] | null> {
     console.log('fetch connections');
     try {
