@@ -10,11 +10,16 @@
   },
   "dependencies": {
     "axios": "^1.8.4",
+    "d3": "^7.9.0",
+    "jquery": "^3.7.1",
+    "jquery-ui": "^1.14.1",
     "pinia": "^3.0.2",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@types/jquery": "^3.5.32",
+    "@types/jqueryui": "^1.12.24",
     "@types/node": "^22.14.1",
     "@vitejs/plugin-vue": "^5.2.2",
     "@vue/runtime-core": "^3.5.13",
