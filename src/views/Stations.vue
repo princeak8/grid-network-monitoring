@@ -9,7 +9,7 @@
           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           @input="filterStations" />
       </div>
-      <button @click="setModal" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md flex gap-2">
+      <button @click="setModal()" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md flex gap-2">
         <Plus class="w-6 h-6" /> Add Station
       </button>
     </section>
@@ -60,7 +60,7 @@
                 <button @click="viewStation(station.id)" class="text-blue-600 hover:text-blue-900">
                   View
                 </button>
-                <button @click="editStation(station.id)" class="text-indigo-600 hover:text-indigo-900">
+                <button @click="setModal(station)" class="text-indigo-600 hover:text-indigo-900">
                   Edit
                 </button>
                 <button @click="deleteStation(station.id)" class="text-red-600 hover:text-red-900">
@@ -77,8 +77,11 @@
       class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
       <el-card class="max-w-sm mx-auto w-[30rem]">
         <template #header>
-          <h2 class="text-lg font-semibold">Add Station</h2>
+          <h2 class="text-lg font-semibold">
+            {{ isEditMode ? 'Edit Station' : 'Add Station' }}
+          </h2>
         </template>
+
         <form class="space-y-2">
           <div class="grid">
             <label for="name">Name:</label>
@@ -103,7 +106,9 @@
 
         <template #footer>
           <el-button type="danger" @click="onAction">Cancel</el-button>
-          <el-button type="primary" @click="submit">Add</el-button>
+          <el-button type="primary" @click="submit">
+            {{ isEditMode ? 'Save' : 'Add' }}
+          </el-button>
           <p>{{ message }}</p>
         </template>
       </el-card>
@@ -119,8 +124,7 @@ import { fetchAllStations } from '@/apiUtils';
 import { Plus } from 'lucide-vue-next';
 import { ElCard, ElButton } from 'element-plus';
 import 'element-plus/dist/index.css';
-import { createStation } from '@/services/stationService' 
-import { getStations } from '@/services/stationService';
+import { createStation, getStations, updateStation, deleteStation } from '@/services/stationService';
 
 const name = ref('');
 const identifier = ref('');
@@ -128,7 +132,7 @@ const voltageLevel = ref('');
 const display = ref(true);
 const message = ref('');
 
-const submit = async () => {
+const handleSubmit = async () => {
   try {
     const { data } = await createStation({
       name: name.value,
@@ -160,31 +164,62 @@ export default {
       loading: true,
       error: null,
       modal: false,
+      isEditMode: false,
+      currentStationId: null,
     }
   },
   mounted() {
     this.fetchStations();
   },
 
-    methods: {
+  methods: {
     async submit() {
       try {
-        const { data } = await createStation({
-          name: this.name,
-          identifier: this.identifier,
-          voltageLevel: this.voltageLevel,
-          display: this.display,
-        })
-        this.message = `Station created with ID ${data.id}`
-        this.modal = false
-        this.fetchStations() 
+        let response;
+        if (this.isEditMode) {
+          response = await updateStation(this.currentStationId, {
+            name: this.name,
+            identifier: this.identifier,
+            voltageLevel: this.voltageLevel,
+            display: this.display,
+          });
+          this.message = `Station #${this.currentStationId} updated`;
+        } else {
+          response = await createStation({
+            name: this.name,
+            identifier: this.identifier,
+            voltageLevel: this.voltageLevel,
+            display: this.display,
+          });
+          this.message = `Station created with ID ${response.data.id}`;
+        }
+        this.modal = false;
+        this.fetchStations();
       } catch (err) {
-        console.error(err)
-        this.message = 'Failed to create station'
+        console.error(err);
+        this.message = this.isEditMode
+          ? 'Failed to update station'
+          : 'Failed to create station';
       }
     },
 
-    setModal() {
+    setModal(station = null) {
+      if (station) {
+        this.isEditMode = true;
+        this.currentStationId = station.id;
+        this.name = station.name;
+        this.identifier = station.identifier;
+        this.voltageLevel = station.voltageLevel;
+        this.display = station.display;
+      } else {
+        this.isEditMode = false;
+        this.currentStationId = null;
+        this.name = '';
+        this.identifier = '';
+        this.voltageLevel = null;
+        this.display = true;
+      }
+      this.message = '';
       this.modal = true;
     },
 
