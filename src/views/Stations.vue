@@ -54,10 +54,10 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ station.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.voltageLevel }} kV</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.location }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.numberOfLines }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.lines.length }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
-                <button @click="viewStation(station.id)" class="text-blue-600 hover:text-blue-900">
+                <button @click="setView(station)" class="text-blue-600 hover:text-blue-900">
                   View
                 </button>
                 <button @click="setModal(station)" class="text-indigo-600 hover:text-indigo-900">
@@ -72,6 +72,57 @@
         </tbody>
       </table>
     </div>
+
+    <section v-if="view"
+      class="fixed inset-0 flex items-center justify-center w-full h-screen bg-gray-900 bg-opacity-50 backdrop-blur-sm">
+      <el-card class="w-full max-w-4xl mx-4">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-gray-800">
+              {{ selectedStation.name }}
+            </h2>
+          </div>
+        </template>
+
+        <form class="space-y-4">
+          <div class="grid gap-3">
+            <label class="text-sm font-medium text-gray-600">Connected Lines</label>
+            <div class="grid grid-cols-4 flex-wrap gap-3">
+              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
+                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 shadow-sm w-[150px] hover:shadow-md"
+                :class="{
+                  'border-blue-500': line.voltageLevel < 100,
+                  'border-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                  'border-orange-500': line.voltageLevel >= 200
+                }">
+                <div class="space-y-1">
+                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
+                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
+                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
+                    }">
+                      {{ line.voltageLevel }}kV
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <template #footer>
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-gray-500">{{ message }}</p>
+            <el-button type="primary" @click="onAction" class="px-6 py-2 font-medium">
+              Close Panel
+            </el-button>
+          </div>
+        </template>
+      </el-card>
+    </section>
 
     <section v-if="modal"
       class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
@@ -151,6 +202,17 @@ const handleSubmit = async () => {
 export default {
   name: 'StationsView',
   components: { Plus, ElCard, ElButton },
+  computed: {
+    selectedStation() {
+      return this.stations.find(station => station.id === this.currentStationId) || {
+        lines: [],
+        x: 0,
+        y: 0,
+        display: false,
+        voltageLevel: 0
+      };
+    }
+  },
   data() {
     return {
       name: '',
@@ -166,6 +228,91 @@ export default {
       modal: false,
       isEditMode: false,
       currentStationId: null,
+      view: false,
+
+      dummyStations: [
+        {
+          tableId: 1,
+          id: "main-sub",
+          name: "Main Substation",
+          voltageLevel: 330,
+          display: true,
+          x: 100,
+          y: 150,
+          width: 300,
+          height: 200,
+          lines: [
+            {
+              id: "line-001",
+              name: "Primary Feed",
+              voltageLevel: 330,
+              length: "15km",
+              status: "active"
+            },
+            {
+              id: "line-001",
+              name: "Primary Feed",
+              voltageLevel: 330,
+              length: "15km",
+              status: "active"
+            },
+            {
+              id: "line-001",
+              name: "Primary Feed",
+              voltageLevel: 330,
+              length: "15km",
+              status: "active"
+            },
+            {
+              id: "line-001",
+              name: "Primary Feed",
+              voltageLevel: 330,
+              length: "15km",
+              status: "active"
+            },
+            {
+              id: "line-002",
+              name: "Secondary Feed",
+              voltageLevel: 132,
+              length: "8km",
+              status: "active"
+            }
+          ]
+        },
+        {
+          tableId: 2,
+          id: "west-plant",
+          name: "West Plant",
+          voltageLevel: 132,
+          display: false,
+          x: 400,
+          y: 250,
+          width: 250,
+          height: 180,
+          lines: [
+            {
+              id: "line-003",
+              name: "Western Circuit",
+              voltageLevel: 33,
+              length: "5km",
+              status: "maintenance"
+            }
+          ]
+        },
+        {
+          tableId: 3,
+          id: "north-node",
+          name: "North Node",
+          voltageLevel: 33,
+          display: true,
+          x: 200,
+          y: 400,
+          width: 280,
+          height: 220,
+          lines: []
+        }
+      ]
+
     }
   },
   mounted() {
@@ -223,8 +370,14 @@ export default {
       this.modal = true;
     },
 
+    setView(station) {
+      this.currentStationId = station.id;
+      this.view = true;
+    },
+
     onAction() {
       this.modal = false;
+      this.view = false;
     },
 
     async fetchStations() {
