@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import Stations from '@/views/Stations.vue'
+import Visualizations from '@/views/Visualizations.vue'
 import { useAuthStore } from '@/stores/auth'
 
 // Define routes for the power grid application
@@ -33,6 +34,14 @@ const routes = [
     path: '/stations',
     name: 'Stations',
     component: Stations,
+    meta: {
+      requiresAuth: true
+    }
+  },
+  {
+    path: '/visualizations',
+    name: 'Visualizations',
+    component: Visualizations,
     meta: {
       requiresAuth: true
     }

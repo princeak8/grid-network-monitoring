@@ -31,6 +31,10 @@
           <span class="nav-icon">⚡</span>
           <span class="nav-text" v-if="!sidebarCollapsed">Stations</span>
         </router-link>
+        <router-link to="/visualizations" class="nav-link">
+          <span class="nav-icon">🗺️</span>
+          <span class="nav-text" v-if="!sidebarCollapsed">Visualizations</span>
+        </router-link>
         <router-link to="/outages" class="nav-link">
           <span class="nav-icon">🚨</span>
           <span class="nav-text" v-if="!sidebarCollapsed">Outages</span>

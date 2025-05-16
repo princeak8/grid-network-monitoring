@@ -6,6 +6,10 @@ import router from './router'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 
+// Import jQuery and make it available globally
+import jQuery from 'jquery'
+window.jQuery = window.$ = jQuery
+
 // createApp(App).mount('#app')
 const app = createApp(App)
 
