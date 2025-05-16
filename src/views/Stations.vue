@@ -74,8 +74,8 @@
     </div>
 
     <section v-if="view"
-      class="fixed inset-0 flex items-center justify-center w-full h-screen bg-gray-900 bg-opacity-50 backdrop-blur-sm">
-      <el-card class="w-full max-w-4xl mx-4">
+      class="fixed inset-0 flex items-center justify-center w-full h-screen bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto">
+      <el-card class="w-full max-w-4xl mx-4 mt-60 ">
         <template #header>
           <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">
@@ -84,16 +84,16 @@
           </div>
         </template>
 
-        <form class="space-y-4">
+        <section class="space-y-4">
           <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600">Connected Lines</label>
+            <label class="text-sm font-medium text-gray-600 border-b">Connected Lines</label>
             <div class="grid grid-cols-4 flex-wrap gap-3">
               <div v-for="(line, index) in dummyStations[0].lines" :key="index"
-                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 shadow-sm w-[150px] hover:shadow-md"
+                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
                 :class="{
-                  'border-blue-500': line.voltageLevel < 100,
-                  'border-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                  'border-orange-500': line.voltageLevel >= 200
+                  'border-l-blue-500': line.voltageLevel < 100,
+                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                  'border-l-orange-500': line.voltageLevel >= 200
                 }">
                 <div class="space-y-1">
                   <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
@@ -111,7 +111,89 @@
               </div>
             </div>
           </div>
-        </form>
+
+           <div class="grid gap-3">
+            <label class="text-sm font-medium text-gray-600 border-b">Connected Transformers</label>
+            <div class="grid grid-cols-4 flex-wrap gap-3">
+              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
+                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
+                :class="{
+                  'border-l-blue-500': line.voltageLevel < 100,
+                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                  'border-l-orange-500': line.voltageLevel >= 200
+                }">
+                <div class="space-y-1">
+                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
+                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
+                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
+                    }">
+                      {{ line.voltageLevel }}kV
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+           <div class="grid gap-3">
+            <label class="text-sm font-medium text-gray-600 border-b">Connected Breakers</label>
+            <div class="grid grid-cols-4 flex-wrap gap-3">
+              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
+                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
+                :class="{
+                  'border-l-blue-500': line.voltageLevel < 100,
+                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                  'border-l-orange-500': line.voltageLevel >= 200
+                }">
+                <div class="space-y-1">
+                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
+                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
+                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
+                    }">
+                      {{ line.voltageLevel }}kV
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+           <div class="grid gap-3">
+            <label class="text-sm font-medium text-gray-600 border-b">Battery Banks</label>
+            <div class="grid grid-cols-4 flex-wrap gap-3">
+              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
+                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
+                :class="{
+                  'border-l-blue-500': line.voltageLevel < 100,
+                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                  'border-l-orange-500': line.voltageLevel >= 200
+                }">
+                <div class="space-y-1">
+                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
+                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
+                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
+                    }">
+                      {{ line.voltageLevel }}kV
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </section>
 
         <template #footer>
           <div class="flex items-center justify-between">
