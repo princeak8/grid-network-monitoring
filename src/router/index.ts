@@ -4,6 +4,7 @@ import Dashboard from '@/views/Dashboard.vue'
 import Stations from '@/views/Stations.vue'
 import Visualizations from '@/views/Visualizations.vue'
 import { useAuthStore } from '@/stores/auth'
+import Station from '@/views/Station.vue'
 
 // Define routes for the power grid application
 const routes = [
@@ -34,6 +35,14 @@ const routes = [
     path: '/stations',
     name: 'Stations',
     component: Stations,
+    meta: {
+      requiresAuth: true
+    }
+  },
+   {
+    path: '/station/:id',
+    name: 'Station',
+    component: Station,
     meta: {
       requiresAuth: true
     }

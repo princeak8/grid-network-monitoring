@@ -57,7 +57,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.lines.length }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
-                <button @click="setView(station)" class="text-blue-600 hover:text-blue-900">
+                <button @click="viewStation(station.id)" class="text-blue-600 hover:text-blue-900">
                   View
                 </button>
                 <button @click="setModal(station)" class="text-indigo-600 hover:text-indigo-900">
@@ -73,7 +73,7 @@
       </table>
     </div>
 
-    <section v-if="view"
+    <!-- <section v-if="view"
       class="fixed inset-0 flex items-center justify-center w-full h-screen bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto">
       <el-card class="w-full max-w-4xl mx-4 mt-60 ">
         <template #header>
@@ -204,7 +204,7 @@
           </div>
         </template>
       </el-card>
-    </section>
+    </section> -->
 
     <section v-if="modal"
       class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
@@ -491,7 +491,7 @@ export default {
       );
     },
     viewStation(id) {
-      this.$router.push(`/stations/${id}`);
+      this.$router.push(`/station/${id}`);
     },
     editStation(id) {
       this.$router.push(`/stations/${id}/edit`);
