@@ -1,7 +1,14 @@
 <template>
   <div class="px-6 py-8">
-    <h1 v-if="station" class="text-2xl font-bold mb-6">{{ selectedStation.name }}</h1>
-    <!-- <h1 v-else class="text-2xl font-bold mb-6"> Loading… </h1> -->
+    <h1 v-if="selectedStation" class="text-2xl font-bold mb-6">{{ selectedStation.name }}</h1>
+    
+    <div v-if="loading" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+    <div v-else-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+        <p>{{ error }}</p>
+      </div>
+    <div v-else >
 
     <div v-if="selectedStation?.lines.length">
 
@@ -16,17 +23,6 @@
           <Plus class="w-6 h-6" /> Add Station
         </button>
       </section>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="flex justify-center items-center py-8">
-        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
-        <p>{{ error }}</p>
-      </div>
-
 
       <section v-if="station" class="space-y-4">
         <div class="grid gap-3">
@@ -142,6 +138,7 @@
     <div v-else class="text-sm text-gray-500 italic">
       No connection found.
     </div>
+  </div>
 
   </div>
 </template>
