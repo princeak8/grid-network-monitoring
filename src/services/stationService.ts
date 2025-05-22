@@ -25,3 +25,7 @@ export function getStations() {
 export function deleteStation(id: number) {
   return api.delete(`/stations/${id}`);
 }
+
+export function addLine({stationId, name, identifier, voltageLevel }: {stationId: number, name: string, identifier: string, voltageLevel: number }){
+  return api.post(`/lines`, {stationId, name, identifier, voltageLevel });
+}

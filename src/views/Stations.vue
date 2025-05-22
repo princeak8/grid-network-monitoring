@@ -265,20 +265,20 @@ const voltageLevel = ref('');
 const display = ref(true);
 const message = ref('');
 
-const handleSubmit = async () => {
-  try {
-    const { data } = await createStation({
-      name: name.value,
-      identifier: identifier.value,
-      voltageLevel: voltageLevel.value,
-      display: display.value,
-    });
-    message.value = `Station created with ID ${data.id}`;
-  } catch (err) {
-    console.error(err);
-    message.value = 'Failed to create station';
-  }
-};
+// const handleSubmit = async () => {
+//   try {
+//     const { data } = await createStation({
+//       name: name.value,
+//       identifier: identifier.value,
+//       voltageLevel: voltageLevel.value,
+//       display: display.value,
+//     });
+//     message.value = `Station created with ID ${data.id}`;
+//   } catch (err) {
+//     console.error(err);
+//     message.value = 'Failed to create station';
+//   }
+// };
 
 
 export default {
@@ -312,88 +312,88 @@ export default {
       currentStationId: null,
       view: false,
 
-      dummyStations: [
-        {
-          tableId: 1,
-          id: "main-sub",
-          name: "Main Substation",
-          voltageLevel: 330,
-          display: true,
-          x: 100,
-          y: 150,
-          width: 300,
-          height: 200,
-          lines: [
-            {
-              id: "line-001",
-              name: "Primary Feed",
-              voltageLevel: 330,
-              length: "15km",
-              status: "active"
-            },
-            {
-              id: "line-001",
-              name: "Primary Feed",
-              voltageLevel: 330,
-              length: "15km",
-              status: "active"
-            },
-            {
-              id: "line-001",
-              name: "Primary Feed",
-              voltageLevel: 330,
-              length: "15km",
-              status: "active"
-            },
-            {
-              id: "line-001",
-              name: "Primary Feed",
-              voltageLevel: 330,
-              length: "15km",
-              status: "active"
-            },
-            {
-              id: "line-002",
-              name: "Secondary Feed",
-              voltageLevel: 132,
-              length: "8km",
-              status: "active"
-            }
-          ]
-        },
-        {
-          tableId: 2,
-          id: "west-plant",
-          name: "West Plant",
-          voltageLevel: 132,
-          display: false,
-          x: 400,
-          y: 250,
-          width: 250,
-          height: 180,
-          lines: [
-            {
-              id: "line-003",
-              name: "Western Circuit",
-              voltageLevel: 33,
-              length: "5km",
-              status: "maintenance"
-            }
-          ]
-        },
-        {
-          tableId: 3,
-          id: "north-node",
-          name: "North Node",
-          voltageLevel: 33,
-          display: true,
-          x: 200,
-          y: 400,
-          width: 280,
-          height: 220,
-          lines: []
-        }
-      ]
+      // dummyStations: [
+      //   {
+      //     tableId: 1,
+      //     id: "main-sub",
+      //     name: "Main Substation",
+      //     voltageLevel: 330,
+      //     display: true,
+      //     x: 100,
+      //     y: 150,
+      //     width: 300,
+      //     height: 200,
+      //     lines: [
+      //       {
+      //         id: "line-001",
+      //         name: "Primary Feed",
+      //         voltageLevel: 330,
+      //         length: "15km",
+      //         status: "active"
+      //       },
+      //       {
+      //         id: "line-001",
+      //         name: "Primary Feed",
+      //         voltageLevel: 330,
+      //         length: "15km",
+      //         status: "active"
+      //       },
+      //       {
+      //         id: "line-001",
+      //         name: "Primary Feed",
+      //         voltageLevel: 330,
+      //         length: "15km",
+      //         status: "active"
+      //       },
+      //       {
+      //         id: "line-001",
+      //         name: "Primary Feed",
+      //         voltageLevel: 330,
+      //         length: "15km",
+      //         status: "active"
+      //       },
+      //       {
+      //         id: "line-002",
+      //         name: "Secondary Feed",
+      //         voltageLevel: 132,
+      //         length: "8km",
+      //         status: "active"
+      //       }
+      //     ]
+      //   },
+      //   {
+      //     tableId: 2,
+      //     id: "west-plant",
+      //     name: "West Plant",
+      //     voltageLevel: 132,
+      //     display: false,
+      //     x: 400,
+      //     y: 250,
+      //     width: 250,
+      //     height: 180,
+      //     lines: [
+      //       {
+      //         id: "line-003",
+      //         name: "Western Circuit",
+      //         voltageLevel: 33,
+      //         length: "5km",
+      //         status: "maintenance"
+      //       }
+      //     ]
+      //   },
+      //   {
+      //     tableId: 3,
+      //     id: "north-node",
+      //     name: "North Node",
+      //     voltageLevel: 33,
+      //     display: true,
+      //     x: 200,
+      //     y: 400,
+      //     width: 280,
+      //     height: 220,
+      //     lines: []
+      //   }
+      // ]
 
     }
   },

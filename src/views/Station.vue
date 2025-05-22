@@ -10,21 +10,20 @@
     </div>
     <div v-else>
 
+      <section class="mb-6 w-full flex items-center justify-between">
+        <div class="w-full md:w-6/12">
+          <input v-model="searchQuery" type="text" placeholder="Search stations..."
+            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            @input="filterStations" />
+        </div>
+        <button @click="setModal()" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md flex gap-2">
+          <Plus class="w-6 h-6" /> Add Line
+        </button>
+      </section>
+
       <div v-if="selectedStation?.lines.length">
 
-        <!-- Search Field -->
-        <section class="mb-6 w-full flex items-center justify-between">
-          <div class="w-full md:w-6/12">
-            <input v-model="searchQuery" type="text" placeholder="Search stations..."
-              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              @input="filterStations" />
-          </div>
-          <button @click="setModal()" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md flex gap-2">
-            <Plus class="w-6 h-6" /> Add Station
-          </button>
-        </section>
-
-        <section v-if="station" class="space-y-4">
+        <section v-if="selectedStation" class="space-y-4">
           <div class="grid gap-3">
             <label class="text-sm font-medium text-gray-600 border-b">Connected Lines</label>
             <div class="grid grid-cols-4 flex-wrap gap-3">
@@ -44,7 +43,7 @@
                       'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
                       'bg-orange-100 text-orange-800': line.voltageLevel >= 200
                     }">
-                      {{ line.voltageLevel }}kV
+                      {{ line.voltageLevel | 0 }}kV
                     </span>
                   </div>
                 </div>
@@ -52,7 +51,7 @@
             </div>
           </div>
 
-          <div class="grid gap-3">
+          <!-- <div class="grid gap-3">
             <label class="text-sm font-medium text-gray-600 border-b">Connected Transformers</label>
             <div class="grid grid-cols-4 flex-wrap gap-3">
               <div v-for="(line, index) in selectedStation?.lines" :key="index"
@@ -131,22 +130,64 @@
                 </div>
               </div>
             </div>
-          </div>
+          </div> -->
 
         </section>
       </div>
+
+
       <div v-else class="text-sm text-gray-500 italic">
         No connection found.
       </div>
+
+      <section v-if="modal"
+        class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
+        <el-card class="max-w-sm mx-auto w-[30rem]">
+          <template #header>
+            <h2>Add Line</h2>
+          </template>
+
+          <form class="space-y-2">
+            <div class="grid">
+              <label for="name">Name:</label>
+              <input id="name" v-model="name" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid">
+              <label for="identifier">Identifier:</label>
+              <input id="identifier" v-model="identifier" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid">
+              <label for="voltageLevel">Voltage Level:</label>
+              <input id="voltageLevel" v-model.number="voltageLevel" type="number"
+                class="border rounded-lg p-2 w-full" />
+            </div>
+          </form>
+
+          <template #footer>
+            <el-button type="danger" @click="onAction">Cancel</el-button>
+            <el-button type="primary" @click="submit">
+              {{ isEditMode ? 'Save' : 'Add' }}
+            </el-button>
+            <p>{{ message }}</p>
+          </template>
+
+        </el-card>
+      </section>
     </div>
 
   </div>
 </template>
 
 <script>
-import { getStation, createStation, updateStation, deleteStation } from '@/services/stationService'
+import { getStation, addLine, updateStation, deleteStation } from '@/services/stationService'
 import { Plus } from 'lucide-vue-next'
 import { ElCard, ElButton } from 'element-plus'
+import { ref } from 'vue'
+
+// const stationId = ref(selectedStation?.id)
+// const name = ref('')
+// const identifier = ref('')
+// const voltageLevel = ref=('')
 
 export default {
   name: 'StationView',
@@ -166,6 +207,7 @@ export default {
       voltageLevel: null,
       display: true,
       message: '',
+      modal: false,
     }
   },
   computed: {
@@ -189,29 +231,28 @@ export default {
     async submit() {
       try {
         let resp
-        if (this.isEditMode) {
-          resp = await updateStation(this.stationId, {
-            name: this.name,
-            identifier: this.identifier,
-            voltageLevel: this.voltageLevel,
-            display: this.display,
-          })
-          this.message = `Station #${this.stationId} updated`
-        } else {
-          resp = await createStation({
-            name: this.name,
-            identifier: this.identifier,
-            voltageLevel: this.voltageLevel,
-            display: this.display,
-          })
-          this.message = `Created station #${resp.data.id}`
-        }
-        this.modal = false
-        // re-fetch as needed
-        this.stations = await getStation(this.stationId)
+        resp = await addLine({
+          name: this.name,
+          identifier: this.identifier,
+          voltageLevel: this.voltageLevel,
+          stationId: this.selectedStation.tableId,
+        })
       } catch {
         this.message = 'Save failed'
+        return;
       }
+      this.selectedStation.lines.push({ name: this.name, voltageLevel: this.voltageLevel })
+      this.modal = false
+      this.message = `Created station #${resp.data.id}`
+    },
+
+    setModal() {
+      this.modal = true;
+      this.message = '';
+    },
+
+    onAction() {
+      this.modal = false
     },
     viewStation(id) {
       // match your route path exactly
@@ -226,6 +267,7 @@ export default {
         s.voltageLevel.toString().includes(q)
       )
     }
+
   }
 }
 </script>
