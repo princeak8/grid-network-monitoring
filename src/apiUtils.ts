@@ -1,11 +1,12 @@
 import type { Station, ApiStation, Line, Connection } from "./types"
 import axios from 'axios'
 import apiService from "./ApiService";
+import api from "./services/api";
 
 export async function fetchStations(): Promise<Station[] | null> {
     console.log('fetch stations');
     try {
-        const res = await apiService.get('/stations/displayed');
+        const res = await api.get('/stations/displayed');
         // console.log("res:", res);
         return res.data;
     } catch (e) {
