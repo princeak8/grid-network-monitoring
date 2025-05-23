@@ -17,7 +17,7 @@
 
         <!-- Inner lines group -->
         <LineBox v-for="line in station.lines" :key="line.id" :line="line" :startDrag="startDrag" :startConnectionCreation="startConnectionCreation"  
-            :connectionMode="connectionMode"
+            :connectionMode="connectionMode" :live-data="liveData.data[station.id]?.[line.id] || {}"
         />
           
         
@@ -40,6 +40,8 @@ import {
   getFromLocalStorage,
   updateStationSize
 } from '../utils';
+import { useLiveDataStore } from '@/stores/liveData';
+const liveData = useLiveDataStore();
 
 const props = defineProps<{
   id: string;

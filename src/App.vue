@@ -84,6 +84,39 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from './stores/auth';
+import { useLiveDataStore } from '@/stores/liveData';
+
+const store = useLiveDataStore();
+
+const ws = new WebSocket("ws://127.0.0.1:8000/ws/data");
+// console.log("ws", ws);
+
+// Handle incoming data
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data); // Parse data
+  // console.log("Live Station Data:", data);
+
+  if(data.components && data.components.length > 0) {
+    data.components.forEach((component) => {
+      console.log("component:", component);
+      console.log("data:", data.id);
+      let stationId = data.id;
+      const { mw, v, a, mvar} = component.data;
+      store.updateLineData(stationId, component.id, mw, v, a, mvar);
+    })
+  }
+  // Use a store or component state to update UI here
+};
+
+// Connection established
+ws.onopen = () => {
+  console.log("WebSocket connected");
+};
+
+// Handle connection errors
+ws.onerror = (err) => {
+  console.error("WebSocket error", err);
+};
 
 // Store and router
 const authStore = useAuthStore();

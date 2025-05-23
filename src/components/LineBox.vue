@@ -7,10 +7,11 @@
           >
             <rect :width="lineWidth" :height="lineHeight" fill="#e0f0ff" stroke="#000" stroke-width="2" />
             <text x="10" y="10" class="component-label line-name">{{ line.name || line.id }}</text>
-            <text x="5" y="25" class="component-label line-value" v-if="line.mw !== null && line.mw !== undefined">{{ line.mw }} 
+            <!-- <text x="5" y="25" class="component-label line-value" v-if="line.mw !== null && line.mw !== undefined">{{ line.mw }}  -->
+              <text x="5" y="25" class="component-label line-value">{{ liveData.mw }} 
                 <tspan class="unit-label">MW</tspan>
             </text>
-            <text x="5" y="40" class="component-label" v-if="line.v !== null && line.v !== undefined">{{ line.v }} 
+            <text x="5" y="40" class="component-label">{{ liveData.v }} 
                 <tspan class="unit-label">kV</tspan>
             </text>
             
@@ -48,6 +49,7 @@ import { lineWidth, lineHeight } from "../constants";
 
 const props = defineProps<{
   line: any,
+  liveData: { mw?: number, v?: number }
   startDrag(event: MouseEvent, line: Line, station: Station),
   startConnectionCreation(event: MouseEvent, station: Station, line: Line, side: string),
   connectionMode: boolean
