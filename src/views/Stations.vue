@@ -51,7 +51,7 @@
           </tr>
           <tr v-for="(station, index) in filteredStations" :key="station.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ station.name }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ station.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.voltageLevel }} kV</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.location }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.lines.length }}</td>

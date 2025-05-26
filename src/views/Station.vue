@@ -35,20 +35,32 @@
                   'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
                   'border-l-orange-500': line.voltageLevel >= 200
                 }">
-                <div class="space-y-1 w-full">
-                  <div class="flex items-center justify-between w-full">
+                <div class="w-full space-y-2">
+                  <div class="flex items-center justify-between gap-2">
                     <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
-                    <SplinePointer @click="openModal(line)" title="+ add connection" class="w-4 h-4 cursor-pointer hover:text-blue-500" />
+                    <div class="flex items-center gap-2">
+                      <div class="flex gap-1 flex-wrap justify-end">
+                        <p v-for="connect in line?.outgoingConnections" :key="connect.id"
+                          class="bg-green-200 px-2 rounded-md text-xs">
+                          {{ connect?.id }}
+                        </p>
+                      </div>
+                      <SplinePointer @click="openModal(line)" title="+ add connection"
+                        class="w-4 h-4 cursor-pointer hover:text-blue-500 flex-shrink-0" />
+                    </div>
                   </div>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
-                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
-                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
-                    }">
-                      {{ line.voltageLevel | 0 }}kV
-                    </span>
+
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs font-medium text-gray-500">Voltage:</span>
+                      <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
+                        'bg-blue-100 text-blue-800': line.voltageLevel < 100,
+                        'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
+                        'bg-orange-100 text-orange-800': line.voltageLevel >= 200
+                      }">
+                        {{ line.voltageLevel | 0 }}kV
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -220,7 +232,8 @@
               <select id="fromLine" v-model="fromLineId"
                 class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option disabled value="">Select line</option>
-                <option v-for="line in linesForStation(fromStationId)" :key="line.id" :value="line.tableId">{{ line.name }}
+                <option v-for="line in linesForStation(fromStationId)" :key="line.id" :value="line.tableId">{{ line.name
+                }}
                 </option>
               </select>
             </div>
@@ -375,7 +388,7 @@ export default {
       this.selectedStation.lines.push({ name: this.name, voltageLevel: this.voltageLevel })
       this.message = `Saved Connection #${resp.data.id}`
       this.modal = false
-      this.showConnectionModal= false
+      this.showConnectionModal = false
     },
 
     async fetchStations() {
