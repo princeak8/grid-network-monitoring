@@ -144,43 +144,37 @@
         No connection found.
       </div>
 
-      <section v-if="showConnectionModal"
-        class="fixed inset-0 flex items-center justify-center bg-gray-200 bg-opacity-20 z-50">
-        <el-card class="w-full max-w-2xl p-6">
+      <section v-if="modal"
+        class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
+        <el-card class="max-w-sm mx-auto w-[30rem]">
           <template #header>
-            <h2 class="text-xl font-semibold">Create Connection</h2>
+            <h2>Add Line</h2>
           </template>
 
-          <form class="space-y-6">
-            <div>
-              <label for="fromStation">From Station</label>
-              <select id="fromStation" v-model="fromStationId" class="">
-                <option disabled value="">Select station</option>
-                <option v-for="st in stations" :key="st.id" :value="st.id">
-                  {{ st.name }}
-                </option>
-              </select>
+          <form class="space-y-2">
+            <div class="grid">
+              <label for="name">Name:</label>
+              <input id="name" v-model="name" type="text" class="border rounded-lg p-2 w-full" />
             </div>
-
-            <div>
-              <label for="fromLine">From Line</label>
-              <select id="fromLine" v-model="fromLineId" class="">
-                <option disabled value="">Select line</option>
-                <option v-for="ln in linesForStation(fromStationId)" :key="ln.id" :value="ln.id">
-                  {{ ln.name }}
-                </option>
-              </select>
+            <div class="grid">
+              <label for="identifier">Identifier:</label>
+              <input id="identifier" v-model="identifier" type="text" class="border rounded-lg p-2 w-full" />
             </div>
-
-            <div class="flex justify-end space-x-4">
-              <el-button type="danger" @click="showConnectionModal = false">
-                Cancel
-              </el-button>
-              <el-button type="primary" @click="createConnection">
-                Save
-              </el-button>
+            <div class="grid">
+              <label for="voltageLevel">Voltage Level:</label>
+              <input id="voltageLevel" v-model.number="voltageLevel" type="number"
+                class="border rounded-lg p-2 w-full" />
             </div>
           </form>
+
+          <template #footer>
+            <el-button type="danger" @click="onAction">Cancel</el-button>
+            <el-button type="primary" @click="submit">
+              {{ isEditMode ? 'Save' : 'Add' }}
+            </el-button>
+            <p>{{ message }}</p>
+          </template>
+
         </el-card>
       </section>
     </div>
