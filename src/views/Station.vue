@@ -38,7 +38,7 @@
                 <div class="space-y-1 w-full">
                   <div class="flex items-center justify-between w-full">
                     <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
-                    <SplinePointer @click="openModal(line)" title="+ add connection" class="w-4 h-4 cursor-pointer" />
+                    <SplinePointer @click="openModal(line)" title="+ add connection" class="w-4 h-4 cursor-pointer hover:text-blue-500" />
                   </div>
                   <div class="flex items-center gap-1">
                     <span class="text-xs font-medium text-gray-500">Voltage:</span>
@@ -154,7 +154,7 @@
           <form class="space-y-6">
             <div>
               <label for="fromStation">From Station</label>
-              <select id="fromStation" v-model="fromStationId" class="…">
+              <select id="fromStation" v-model="fromStationId" class="">
                 <option disabled value="">Select station</option>
                 <option v-for="st in stations" :key="st.id" :value="st.id">
                   {{ st.name }}
@@ -164,14 +164,13 @@
 
             <div>
               <label for="fromLine">From Line</label>
-              <select id="fromLine" v-model="fromLineId" class="…">
+              <select id="fromLine" v-model="fromLineId" class="">
                 <option disabled value="">Select line</option>
                 <option v-for="ln in linesForStation(fromStationId)" :key="ln.id" :value="ln.id">
                   {{ ln.name }}
                 </option>
               </select>
             </div>
-
 
             <div class="flex justify-end space-x-4">
               <el-button type="danger" @click="showConnectionModal = false">
@@ -380,8 +379,9 @@ export default {
         return;
       }
       this.selectedStation.lines.push({ name: this.name, voltageLevel: this.voltageLevel })
-      this.modal = false
       this.message = `Saved Connection #${resp.data.id}`
+      this.modal = false
+      this.showConnectionModal= false
     },
 
     async fetchStations() {
