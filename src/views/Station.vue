@@ -44,8 +44,6 @@
                           class="bg-green-200 px-2 py-1 rounded-md text-xs">
                           {{ line.id }}
                         </p>
-
-
                       </div>
                       <SplinePointer @click="openModal(line)" title="+ add connection"
                         class="w-4 h-4 cursor-pointer hover:text-blue-500 flex-shrink-0" />
