@@ -40,10 +40,12 @@
                     <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
                     <div class="flex items-center gap-2">
                       <div class="flex gap-1 flex-wrap justify-end">
-                        <p v-for="connect in line?.outgoingConnections" :key="connect.id"
-                          class="bg-green-200 px-2 rounded-md text-xs">
-                          {{ connect?.id }}
+                        <p v-if="(line.incomingConnections.length > 0 || line.outgoingConnections.length > 0)"
+                          class="bg-green-200 px-2 py-1 rounded-md text-xs">
+                          {{ line.id }}
                         </p>
+
+
                       </div>
                       <SplinePointer @click="openModal(line)" title="+ add connection"
                         class="w-4 h-4 cursor-pointer hover:text-blue-500 flex-shrink-0" />
