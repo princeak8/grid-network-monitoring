@@ -11,7 +11,7 @@
               <text x="5" y="25" class="component-label line-value">{{ liveData.mw }} 
                 <tspan class="unit-label">MW</tspan>
             </text>
-            <text x="5" y="40" class="component-label">{{ liveData.v }} 
+            <text x="5" y="40" class="component-label line-value">{{ liveData.v }} 
                 <tspan class="unit-label">kV</tspan>
             </text>
             
@@ -60,12 +60,19 @@ const props = defineProps<{
 <style scoped>
 .component-label {
   font-size: 12px;
+  font-weight: 100;
   /* fill: #333; */
   pointer-events: none; /* Makes text non-interactive for mouse events */
 }
 
 .line-name {
-    font-size: 10px;
+    font-size: 8px;
+    font-weight: 200;
+}
+
+.line-value {
+    font-size: 8px;
+    font-weight: 200;
 }
 
 .unit-label {

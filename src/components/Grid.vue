@@ -283,7 +283,7 @@
   onMounted(async () => {
     console.log("Grid component mounted");
     try {
-        await fetchStations();
+        // await fetchStations();
         stations.value = await loadStations();
         connections.value = await loadConnections(stations.value);
         // console.log("connections:", connections.value);
@@ -337,7 +337,7 @@
   }
   
   .container {
-    overflow: auto;
+    /* overflow: auto; */
     width: 100%;
     height: 100%;
     display: flex;

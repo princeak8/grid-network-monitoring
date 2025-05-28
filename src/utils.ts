@@ -42,6 +42,11 @@ function mergeStations(base: Station[], updates: Station[]): Station[] {
   return Array.from(baseMap.values())
 }
 
+function removeObsoleteStations(base: Station[], updates: Station[]): Station[] {
+  const updateIds = new Set(updates.map(s => s.id))
+  return base.filter(station => updateIds.has(station.id))
+}
+
 function getSource(local: Station[] | null, api: Station[] | null) {
     if(local && api) return mergeStations(local, api);
     return local || api || [];
@@ -51,13 +56,15 @@ export async function loadStations(): Promise<Station[]> {
     // return (getFromLocalStorage() || (await fetchFromApi()) || stationsData
     // )
     const local = getFromLocalStorage()
+    console.log("stations from local storage:", local);
     const api = await fetchStations();
 
     // const source = local || api || []
     const source = getSource(local, api);
+    console.log("source:", source);
 
     // Merge new stations into source
-    const merged = mergeStations(source, stationsData)
+    const merged = (api) ? removeObsoleteStations(source, api) : source;
 
     // Save merged result for future loads
     saveToLocalStorage(merged)

@@ -98,8 +98,8 @@ ws.onmessage = (event) => {
 
   if(data.components && data.components.length > 0) {
     data.components.forEach((component) => {
-      console.log("component:", component);
-      console.log("data:", data.id);
+      // console.log("component:", component);
+      // console.log("data:", data.id);
       let stationId = data.id;
       const { mw, v, a, mvar} = component.data;
       store.updateLineData(stationId, component.id, mw, v, a, mvar);
@@ -380,6 +380,7 @@ body {
   flex-direction: column;
   transition: margin-left 0.3s ease;
   min-height: 100vh;
+  width: 100%;
 }
 
 .main-content.with-sidebar {
@@ -457,6 +458,7 @@ body {
 .page-content {
   padding: 20px;
   flex: 1;
+  width: 100%;
 }
 
 /* Responsive adjustments */

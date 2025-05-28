@@ -419,6 +419,7 @@ export default {
             identifier: this.identifier,
             voltageLevel: this.voltageLevel,
             display: this.display,
+            type: 'transmission'
           });
           this.message = `Station created with ID ${response.data.id}`;
         }

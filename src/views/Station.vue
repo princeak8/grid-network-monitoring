@@ -371,16 +371,24 @@ export default {
 
     async createConnection() {
       try {
-        let resp
-        resp = await addConnection({
+        console.log(this.selectedStation);
+        let lineArr = this.selectedStation.lines.filter((line) => (line.tableId == this.fromLineId) || (line.tableId == this.toLineId))
+        if(lineArr) {
+          let resp
+          resp = await addConnection({
 
-          identifier: this.selectedStation.id,
-          fromStationId: this.fromStationId,
-          fromLineId: this.fromLineId,
-          toStationId: this.toStationId,
-          toLineId: this.toLineId,
+            identifier: lineArr[0].id,
+            fromStationId: this.fromStationId,
+            fromLineId: this.fromLineId,
+            toStationId: this.toStationId,
+            toLineId: this.toLineId,
 
-        })
+          })
+        }else{
+          this.message = "cannot find the appropriate line";
+          console.log("lineArr", lineArr);
+          return;
+        }
       } catch {
         this.message = 'Save failed'
         return;

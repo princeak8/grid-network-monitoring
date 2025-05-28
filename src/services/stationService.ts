@@ -1,11 +1,12 @@
 import api from './api';
 
-export function createStation({ name, identifier, voltageLevel, display }:{ name: any, identifier: any, voltageLevel: any, display: any }) {
+export function createStation({ name, identifier, voltageLevel, display, type }:{ name: any, identifier: any, voltageLevel: any, display: any, type: string }) {
   return api.post('/stations', {
     name,
     identifier,
     voltageLevel,
     display,
+    type
   });
 }
 

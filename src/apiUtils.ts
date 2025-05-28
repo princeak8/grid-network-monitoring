@@ -7,7 +7,7 @@ export async function fetchStations(): Promise<Station[] | null> {
     console.log('fetch stations');
     try {
         const res = await api.get('/stations/displayed');
-        // console.log("res:", res);
+        console.log("stations from api:", res);
         return res.data;
     } catch (e) {
         console.log("error: ", e);
