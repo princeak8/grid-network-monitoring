@@ -10,6 +10,9 @@ export function createStation({ name, identifier, voltageLevel, display, type }:
   });
 }
 
+export function authLogin({username, password}: {username: string, password: string}){
+  return api.post(`/auth/login`, {username, password});
+}
 
 export function getStations() {
     return api.get('/stations').then(res => res.data);

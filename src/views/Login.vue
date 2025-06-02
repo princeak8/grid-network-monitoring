@@ -13,41 +13,27 @@
           </svg>
         </div>
       </div>
-      
+
       <div class="login-form">
         <div class="form-group" :class="{ 'error': errors.username }">
           <label for="username">Username</label>
-          <input 
-            type="text" 
-            id="username" 
-            v-model="form.username" 
-            placeholder="Enter your username"
-            @input="clearError('username')"
-          />
+          <input type="text" id="username" v-model="form.username" placeholder="Enter your username"
+            @input="clearError('username')" />
           <span class="error-message" v-if="errors.username">{{ errors.username }}</span>
         </div>
-        
+
         <div class="form-group" :class="{ 'error': errors.password }">
           <label for="password">Password</label>
           <div class="password-input">
-            <input 
-              :type="showPassword ? 'text' : 'password'" 
-              id="password" 
-              v-model="form.password" 
-              placeholder="Enter your password"
-              @input="clearError('password')"
-            />
-            <button 
-              type="button" 
-              class="toggle-password" 
-              @click="togglePasswordVisibility"
-            >
+            <input :type="showPassword ? 'text' : 'password'" id="password" v-model="form.password"
+              placeholder="Enter your password" @input="clearError('password')" />
+            <button type="button" class="toggle-password" @click="togglePasswordVisibility">
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </div>
           <span class="error-message" v-if="errors.password">{{ errors.password }}</span>
         </div>
-        
+
         <div class="form-options">
           <div class="remember-me">
             <input type="checkbox" id="remember" v-model="form.rememberMe" />
@@ -55,25 +41,20 @@
           </div>
           <a href="#" class="forgot-password" @click.prevent="forgotPassword">Forgot password?</a>
         </div>
-        
+
         <div class="form-actions">
-          <button 
-            type="button" 
-            class="login-button" 
-            :disabled="isLoading" 
-            @click="login"
-          >
+          <button type="button" class="login-button" :disabled="isLoading" @click="login">
             <span v-if="isLoading" class="loader"></span>
             <span v-else>Login</span>
           </button>
         </div>
-        
+
         <div v-if="loginError" class="login-error">
           {{ loginError }}
         </div>
       </div>
     </div>
-    
+
     <!-- System Status Indicator -->
     <div class="system-status">
       <div class="status-indicator" :class="systemStatus.color"></div>
@@ -86,19 +67,19 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { authLogin } from '@/services/stationService';
+import Cookies from 'js-cookie'
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-// Form state
 const form = reactive({
   username: '',
   password: '',
   rememberMe: false
 });
 
-// Form validation and UI state
 const errors = reactive({
   username: '',
   password: ''
@@ -107,18 +88,15 @@ const showPassword = ref(false);
 const isLoading = ref(false);
 const loginError = ref('');
 
-// System status (in a real application, this would come from an API)
 const systemStatus = reactive({
   text: 'Online',
   color: 'green'
 });
 
-// Check system status on component mount
 onMounted(() => {
   checkSystemStatus();
 });
 
-// Functions
 function togglePasswordVisibility() {
   showPassword.value = !showPassword.value;
 }
@@ -130,12 +108,12 @@ function clearError(field: 'username' | 'password') {
 
 function validateForm() {
   let isValid = true;
-  
+
   if (!form.username.trim()) {
     errors.username = 'Username is required';
     isValid = false;
   }
-  
+
   if (!form.password) {
     errors.password = 'Password is required';
     isValid = false;
@@ -143,55 +121,45 @@ function validateForm() {
     errors.password = 'Password must be at least 8 characters';
     isValid = false;
   }
-  
+
   return isValid;
 }
 
 async function login() {
   if (!validateForm()) return;
-  
+
   isLoading.value = true;
   loginError.value = '';
-  
+
   try {
-    // In a real application, this would be an actual API call
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-    
-    // This is a simplified example; in production, use proper authentication
-    if (form.username === 'admin' && form.password === 'password123') {
-      // Successful login
-      const token = 'sample-jwt-token-' + Math.random().toString(36).substring(2);
-      
-      // Store authentication data
+    const response = await authLogin({
+      username: form.username,
+      password: form.password
+    });
+
+    // console.log(response)
+
+    if (response.status === 200) {
+      const token = response.data.token;
+      const { id, firstname, surname, role, username } = response.data.user;
+      const expiry = response.data.expiry; 
+
       authStore.setToken(token);
       authStore.setUser({
-        id: '1',
-        username: form.username,
-        role: 'Administrator',
-        name: 'System Administrator'
+        id: id,
+        username: `${firstname} ${surname}`,
+        role: role,
+        name: role.name
       });
-      
-      // Save to localStorage if remember me is checked
+
       if (form.rememberMe) {
-        localStorage.setItem('power-grid-auth-token', token);
+        Cookies.set('power-grid-auth-token', token);
       } else {
-        sessionStorage.setItem('power-grid-auth-token', token);
+        Cookies.set('power-grid-auth-token', token);
       }
-      
-      // Redirect to the home route ('/')
+
       router.replace('/');
-
-      /*
-
-        const result = await authStore.login(form.username, form.password);
-        
-        if (result.status) {
-          // Successful login - redirect to the home route ('/')
-          router.push('/');
-
-      */
     } else {
-      // Failed login
       loginError.value = 'Invalid username or password';
     }
   } catch (error) {
@@ -203,23 +171,19 @@ async function login() {
 }
 
 function forgotPassword() {
-  // In a real application, this would open a password reset flow
   alert('Password reset functionality would be implemented here.');
 }
 
 function checkSystemStatus() {
-  // In a real application, this would be an API call to check the power grid system status
-  // For now, we'll simulate a status check
   const statusOptions = [
     { text: 'Online', color: 'green' },
     { text: 'Partial Outage', color: 'yellow' },
     { text: 'Maintenance', color: 'blue' }
   ];
-  
-  // Randomly select a status (90% chance of being online for demo purposes)
+
   const random = Math.random();
   let selectedStatus;
-  
+
   if (random < 0.9) {
     selectedStatus = statusOptions[0]; // Online
   } else if (random < 0.95) {
@@ -227,11 +191,12 @@ function checkSystemStatus() {
   } else {
     selectedStatus = statusOptions[2]; // Maintenance
   }
-  
+
   systemStatus.text = selectedStatus.text;
   systemStatus.color = selectedStatus.color;
 }
 </script>
+
 
 <style scoped>
 .login-container {

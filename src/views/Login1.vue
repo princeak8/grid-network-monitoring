@@ -86,6 +86,7 @@
   import { ref, reactive, onMounted } from 'vue';
   import { useRouter, useRoute } from 'vue-router';
   import { useAuthStore } from '../stores/auth';
+  import Cookies from 'js-cookie'
   
   const router = useRouter();
   const route = useRoute();
@@ -173,9 +174,9 @@
         
         // Save to localStorage if remember me is checked
         if (form.rememberMe) {
-          localStorage.setItem('power-grid-auth-token', token);
+          Cookies.set('power-grid-auth-token', token);
         } else {
-          sessionStorage.setItem('power-grid-auth-token', token);
+          Cookies.set('power-grid-auth-token', token);
         }
         
         // Redirect to the intended destination or dashboard

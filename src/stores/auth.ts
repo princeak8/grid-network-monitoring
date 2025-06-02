@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import axios, { AxiosError } from 'axios'
 import type { UserType } from '@/types'
+import Cookies from 'js-cookie'
 
 interface AuthState {
   token: string | null,
@@ -9,7 +10,7 @@ interface AuthState {
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
-    token: localStorage.getItem('auth_token') || null,
+    token: Cookies.get('auth_token') || null,
     user: JSON.parse(localStorage.getItem('user') || '{}') || null // Provide a default empty object
   }),
   actions: {
@@ -23,7 +24,7 @@ export const useAuthStore = defineStore('auth', {
         this.token = response?.data?.data?.token;
         this.user = response?.data?.data?.user;
         if(this.token && this.user) { 
-          localStorage.setItem('auth_token', this.token);
+          Cookies.set('auth_token', this.token);
           localStorage.setItem('user', JSON.stringify(this.user));
           return {status: true};
         }else{
@@ -37,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
     },
     setToken(token: string) {
       this.token = token;
-      localStorage.setItem('auth_token', token);
+      Cookies.set('auth_token', token);
     },
     setUser(user: UserType) {
       this.user = user;
@@ -46,11 +47,11 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.token = null
       this.user = null
-      localStorage.removeItem('auth_token')
+      Cookies.removeItem('auth_token')
       localStorage.removeItem('user')
     },
     initializeAuth() {
-      const token = localStorage.getItem('auth_token')
+      const token = Cookies.get('auth_token')
       const user = localStorage.getItem('user')
       if (token) {
         this.token = token

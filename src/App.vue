@@ -131,10 +131,12 @@ const systemStatus = ref({
   color: 'green'
 });
 
+console.log("auth: ", authStore)
+
 // Computed properties
 const isAuthenticated = computed(() => authStore.isAuthenticated);
-const userInitials = computed(() => authStore.userInitials);
-const userFullName = computed(() => authStore.userFullName);
+const userInitials = computed(() => `${authStore.user.name.split('')[0].toUpperCase()}`);
+const userFullName = computed(() => authStore.user.name);
 const userRole = computed(() => authStore.user?.role || '');
 
 const currentPageTitle = computed(() => {
