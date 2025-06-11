@@ -80,7 +80,7 @@
             </button>
           </section>
 
-          <div v-if="selectedStation?.lines.length" class="grid grid-cols-4 flex-wrap gap-3 w-full">
+          <div v-if="selectedStation?.transformers.length" class="grid grid-cols-4 flex-wrap gap-3 w-full">
             <div v-for="(xf, idx) in selectedStation.transformers" :key="idx" @click="openModal(xf)"
               class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
               :class="{
