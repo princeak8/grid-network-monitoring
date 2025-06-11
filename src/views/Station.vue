@@ -18,8 +18,7 @@
         </div>
       </section>
 
-      <div v-if="selectedStation?.lines.length">
-
+      <div>
         <section v-if="selectedStation" class="space-y-4">
           <div class="grid gap-3">
             <section class="flex items-center justify-between text-xs border-b pb-2">
@@ -29,7 +28,7 @@
                 <Plus class="w-4 h-4" /> Add Line
               </button>
             </section>
-            <div class="grid grid-cols-4 flex-wrap gap-3 w-full">
+            <div v-if="selectedStation?.lines.length" class="grid grid-cols-4 flex-wrap gap-3 w-full">
               <div v-for="(line, index) in selectedStation?.lines" :key="index" @click="openModal(line)"
                 class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
                 :class="{
@@ -67,50 +66,59 @@
                 </div>
               </div>
             </div>
+
+            <div v-else class="text-sm text-gray-500 italic">
+              No line found.
+            </div>
+
           </div>
 
-            <section class="flex items-center justify-between text-xs border-b pb-2">
-              <label class="text-sm font-medium text-gray-600">Connected Transformers</label>
-              <button @click="setModal2()" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-1 rounded-md flex gap-1">
-                <Plus class="w-4 h-4" /> Add Transformer
-              </button>
-            </section>
+          <section class="flex items-center justify-between text-xs border-b pb-2">
+            <label class="text-sm font-medium text-gray-600">Connected Transformers</label>
+            <button @click="setModal2()" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-1 rounded-md flex gap-1">
+              <Plus class="w-4 h-4" /> Add Transformer
+            </button>
+          </section>
 
-            <div class="grid grid-cols-4 flex-wrap gap-3 w-full">
-              <div v-for="(xf, idx) in selectedStation.transformers" :key="idx" @click="openModal(xf)"
-                class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
-                :class="{
-                  'border-l-blue-500': xf.powerRating < 50,
-                  'border-l-green-500': xf.powerRating >= 50 && xf.powerRating < 150,
-                  'border-l-orange-500': xf.powerRating >= 150
-                }">
-                <div class="w-full space-y-2">
-                  <div class="flex items-center justify-between gap-2">
-                    <span class="block text-sm font-medium text-gray-800">{{ xf.name }}</span>
-                    <div class="flex items-center gap-2">
-                      <p v-if="xf.serialNo" class="bg-green-200 px-2 py-1 rounded-md text-xs">
-                        {{ xf.serialNo }}
-                      </p>
-                      <SplinePointer @click="openModal(xf)" title="+ add connection"
-                        class="w-4 h-4 cursor-pointer hover:text-blue-500 flex-shrink-0" />
-                    </div>
+          <div v-if="selectedStation?.lines.length" class="grid grid-cols-4 flex-wrap gap-3 w-full">
+            <div v-for="(xf, idx) in selectedStation.transformers" :key="idx" @click="openModal(xf)"
+              class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
+              :class="{
+                'border-l-blue-500': xf.powerRating < 50,
+                'border-l-green-500': xf.powerRating >= 50 && xf.powerRating < 150,
+                'border-l-orange-500': xf.powerRating >= 150
+              }">
+              <div class="w-full space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="block text-sm font-medium text-gray-800">{{ xf.name }}</span>
+                  <div class="flex items-center gap-2">
+                    <p v-if="xf.serialNo" class="bg-green-200 px-2 py-1 rounded-md text-xs">
+                      {{ xf.serialNo }}
+                    </p>
+                    <SplinePointer @click="openModal(xf)" title="+ add connection"
+                      class="w-4 h-4 cursor-pointer hover:text-blue-500 flex-shrink-0" />
                   </div>
+                </div>
 
-                  <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-1">
-                      <span class="text-xs font-medium text-gray-500">Rating:</span>
-                      <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                        'bg-blue-100 text-blue-800': xf.powerRating < 50,
-                        'bg-green-100 text-green-800': xf.powerRating >= 50 && xf.powerRating < 150,
-                        'bg-orange-100 text-orange-800': xf.powerRating >= 150
-                      }">
-                        {{ xf.powerRating }} {{ xf.powerRatingUnit.toUpperCase() }}
-                      </span>
-                    </div>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1">
+                    <span class="text-xs font-medium text-gray-500">Rating:</span>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
+                      'bg-blue-100 text-blue-800': xf.powerRating < 50,
+                      'bg-green-100 text-green-800': xf.powerRating >= 50 && xf.powerRating < 150,
+                      'bg-orange-100 text-orange-800': xf.powerRating >= 150
+                    }">
+                      {{ xf.powerRating }} {{ xf.powerRatingUnit.toUpperCase() }}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div v-else class="text-sm text-gray-500 italic">
+            No Transformer found.
+          </div>
 
           <!-- <div class="grid gap-3">
             <label class="text-sm font-medium text-gray-600 border-b">Connected Breakers</label>
@@ -170,9 +178,9 @@
       </div>
 
 
-      <div v-else class="text-sm text-gray-500 italic">
+      <!-- <div v-else class="text-sm text-gray-500 italic">
         No connection found.
-      </div>
+      </div> -->
 
       <section v-if="modal"
         class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
