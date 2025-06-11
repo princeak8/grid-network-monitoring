@@ -37,3 +37,7 @@ export function addLine({stationId, name, identifier, voltageLevel }: {stationId
 export function addConnection({identifier , fromStationId , fromLineId , toStationId ,toLineId, fromSide, toSide}: {identifier: number, fromStationId: number, fromLineId: number , toStationId: number ,toLineId: number, fromSide: string, toSide: string}){
   return api.post(`/connections`, {identifier , fromStationId , fromLineId , toStationId ,toLineId, fromSide, toSide});
 }
+
+export function addTransformer({stationId, name, manufacturerId,  serialNo, powerRating, powerRatingUnit, typeOfCooling , voltageRating, manufactureYear, installationYear,  }: {stationId: number, name: string, manufacturerId: number,  serialNo: number, powerRating: string, powerRatingUnit: number, typeOfCooling: string , voltageRating: string, manufactureYear: string, installationYear: number }){
+  return api.post(`/transformers`, {stationId, name, manufacturerId,  serialNo, powerRating, powerRatingUnit, typeOfCooling , voltageRating, manufactureYear, installationYear });
+}
