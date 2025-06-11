@@ -28,8 +28,8 @@
           <div class="grid gap-3">
             <label class="text-sm font-medium text-gray-600 border-b">Connected Lines</label>
             <div class="grid grid-cols-4 flex-wrap gap-3 w-full">
-              <div v-for="(line, index) in selectedStation?.lines" :key="index"
-                class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
+              <div v-for="(line, index) in selectedStation?.lines" :key="index" @click="openModal(line)"
+                class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
                 :class="{
                   'border-l-blue-500': line.voltageLevel < 100,
                   'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
@@ -253,6 +253,37 @@
             </div>
           </div>
 
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+              <label for="fromLine" class="block text-sm font-medium text-gray-700 mb-1">
+                From Side
+              </label>
+              <select id="fromLine" v-model="fromSide"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+
+            <ArrowRight class="w-6 h-6 text-gray-500 self-center md:mt-6" />
+
+            <div class="flex-1">
+              <label for="toLine" class="block text-sm font-medium text-gray-700 mb-1">
+                To Side
+              </label>
+              <select id="toLine" v-model="toSide"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+
+
           <div class="flex justify-end space-x-4 pt-4 border-t">
             <el-button type="danger" @click="showConnectionModal = false">Cancel</el-button>
             <el-button type="primary" @click="createConnection">Save</el-button>
@@ -292,6 +323,8 @@ export default {
       fromLineId: '',
       toStationId: '',
       toLineId: '',
+      fromSide: 'top',
+      toSide: 'bottom',
       showConnectionModal: false,
     }
   },
@@ -373,18 +406,18 @@ export default {
       try {
         console.log(this.selectedStation);
         let lineArr = this.selectedStation.lines.filter((line) => (line.tableId == this.fromLineId) || (line.tableId == this.toLineId))
-        if(lineArr) {
+        if (lineArr) {
           let resp
           resp = await addConnection({
-
             identifier: lineArr[0].id,
             fromStationId: this.fromStationId,
             fromLineId: this.fromLineId,
             toStationId: this.toStationId,
             toLineId: this.toLineId,
-
+            fromSide: this.fromSide,
+            toSide: this.toSide,
           })
-        }else{
+        } else {
           this.message = "cannot find the appropriate line";
           console.log("lineArr", lineArr);
           return;

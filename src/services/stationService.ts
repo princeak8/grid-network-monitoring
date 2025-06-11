@@ -34,6 +34,6 @@ export function addLine({stationId, name, identifier, voltageLevel }: {stationId
   return api.post(`/lines`, {stationId, name, identifier, voltageLevel });
 }
 
-export function addConnection({identifier , fromStationId , fromLineId , toStationId ,toLineId}: {identifier: number, fromStationId: number, fromLineId: number , toStationId: number ,toLineId: number}){
-  return api.post(`/connections`, {identifier , fromStationId , fromLineId , toStationId ,toLineId});
+export function addConnection({identifier , fromStationId , fromLineId , toStationId ,toLineId, fromSide, toSide}: {identifier: number, fromStationId: number, fromLineId: number , toStationId: number ,toLineId: number, fromSide: string, toSide: string}){
+  return api.post(`/connections`, {identifier , fromStationId , fromLineId , toStationId ,toLineId, fromSide, toSide});
 }
