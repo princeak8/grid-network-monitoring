@@ -229,6 +229,13 @@
             <input id="voltageLevel" v-model.number="voltageLevel" type="number" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
+            <label for="type">Type:</label>
+            <select id="type" v-model="type" class="border rounded-lg p-2 w-full">
+              <option value="transmission">Transmission</option>
+              <option value="generation">Generation</option>
+            </select>
+          </div>
+          <div class="grid">
             <label for="display">Display:</label>
             <select id="display" v-model="display" class="border rounded-lg p-2 w-full">
               <option :value="true">True</option>
@@ -263,6 +270,7 @@ const name = ref('');
 const identifier = ref('');
 const voltageLevel = ref('');
 const display = ref(true);
+const type = ref('transmission');
 const message = ref('');
 
 // const handleSubmit = async () => {
@@ -291,7 +299,8 @@ export default {
         x: 0,
         y: 0,
         display: false,
-        voltageLevel: 0
+        voltageLevel: 0,
+        type: 'transmission'
       };
     }
   },
@@ -301,6 +310,7 @@ export default {
       identifier: '',
       voltageLevel: null,
       display: true,
+      type: 'transmission',
       message: '',
       stations: [],
       filteredStations: [],
@@ -312,88 +322,7 @@ export default {
       currentStationId: null,
       view: false,
 
-      // dummyStations: [
-      //   {
-      //     tableId: 1,
-      //     id: "main-sub",
-      //     name: "Main Substation",
-      //     voltageLevel: 330,
-      //     display: true,
-      //     x: 100,
-      //     y: 150,
-      //     width: 300,
-      //     height: 200,
-      //     lines: [
-      //       {
-      //         id: "line-001",
-      //         name: "Primary Feed",
-      //         voltageLevel: 330,
-      //         length: "15km",
-      //         status: "active"
-      //       },
-      //       {
-      //         id: "line-001",
-      //         name: "Primary Feed",
-      //         voltageLevel: 330,
-      //         length: "15km",
-      //         status: "active"
-      //       },
-      //       {
-      //         id: "line-001",
-      //         name: "Primary Feed",
-      //         voltageLevel: 330,
-      //         length: "15km",
-      //         status: "active"
-      //       },
-      //       {
-      //         id: "line-001",
-      //         name: "Primary Feed",
-      //         voltageLevel: 330,
-      //         length: "15km",
-      //         status: "active"
-      //       },
-      //       {
-      //         id: "line-002",
-      //         name: "Secondary Feed",
-      //         voltageLevel: 132,
-      //         length: "8km",
-      //         status: "active"
-      //       }
-      //     ]
-      //   },
-      //   {
-      //     tableId: 2,
-      //     id: "west-plant",
-      //     name: "West Plant",
-      //     voltageLevel: 132,
-      //     display: false,
-      //     x: 400,
-      //     y: 250,
-      //     width: 250,
-      //     height: 180,
-      //     lines: [
-      //       {
-      //         id: "line-003",
-      //         name: "Western Circuit",
-      //         voltageLevel: 33,
-      //         length: "5km",
-      //         status: "maintenance"
-      //       }
-      //     ]
-      //   },
-      //   {
-      //     tableId: 3,
-      //     id: "north-node",
-      //     name: "North Node",
-      //     voltageLevel: 33,
-      //     display: true,
-      //     x: 200,
-      //     y: 400,
-      //     width: 280,
-      //     height: 220,
-      //     lines: []
-      //   }
-      // ]
+      
 
     }
   },
@@ -411,17 +340,19 @@ export default {
             identifier: this.identifier,
             voltageLevel: this.voltageLevel,
             display: this.display,
+            type: this.type
           });
           this.message = `Station #${this.currentStationId} updated`;
         } else {
+          console.log("type:", this.type);
           response = await createStation({
             name: this.name,
             identifier: this.identifier,
             voltageLevel: this.voltageLevel,
             display: this.display,
-            type: 'transmission'
+            type: this.type
           });
-          this.message = `Station created with ID ${response.data.id}`;
+          this.message = `Station created`;
         }
         this.modal = false;
         this.fetchStations();

@@ -40,7 +40,7 @@
                     <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
                     <div class="flex items-center gap-2">
                       <div class="flex gap-1 flex-wrap justify-end">
-                        <p v-if="(line.incomingConnections.length > 0 || line.outgoingConnections.length > 0)"
+                        <p v-if="(line.incomingConnections?.length > 0 || line.outgoingConnections?.length > 0)"
                           class="bg-green-200 px-2 py-1 rounded-md text-xs">
                           {{ line.id }}
                         </p>
@@ -373,9 +373,9 @@ export default {
       try {
         console.log(this.selectedStation);
         let lineArr = this.selectedStation.lines.filter((line) => (line.tableId == this.fromLineId) || (line.tableId == this.toLineId))
+        let resp;
         if(lineArr) {
-          let resp
-          resp = await addConnection({
+            resp = await addConnection({
 
             identifier: lineArr[0].id,
             fromStationId: this.fromStationId,
@@ -394,7 +394,7 @@ export default {
         return;
       }
       this.selectedStation.lines.push({ name: this.name, voltageLevel: this.voltageLevel })
-      this.message = `Saved Connection #${resp.data.id}`
+      this.message = `Saved Connection`
       this.modal = false
       this.showConnectionModal = false
     },

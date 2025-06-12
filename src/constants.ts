@@ -1,5 +1,5 @@
 export const canvasWidth = 1800;
-export const canvasHeight = 900;
+export const canvasHeight = 1000;
 export const canvasPadding = 5;
 export const lineWidth = 50;
 export const lineHeight = 40;

@@ -1,6 +1,13 @@
 <template>
   <div id="chart-container">
-    <h3>RoCoF (Rate of Change of Frequency) – 24h View</h3>
+    <div class="flex flex-row justify-between">
+      <h3>RoCoF (Rate of Change of Frequency) – 24h View</h3>
+
+      <div class="flex flex-col">
+        <span>Frequency: {{ frequency }}Hz</span>
+        <span>Rocof: {{ rocof }}</span>
+      </div>
+    </div>
 
     <div class="slider-container">
       <label>View starting from: <span>{{ formattedStartDate }}</span></label>
@@ -24,10 +31,17 @@
 <script>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import * as d3 from 'd3';
+import { getRocofs } from '@/services/frequencyService';
 
 export default {
   name: 'RocofVisualizer',
+
   setup() {
+    let intervalId = null;
+
+    const frequency = ref(null);
+    const rocof = ref(null);
+
     const chartArea = ref(null);
     const formattedStartDate = ref('Loading...');
     const loading = ref(true);
@@ -51,7 +65,7 @@ export default {
     let HEIGHT = 0;
     
     // Time formatting
-    const parseTime = d3.utcParse("%Y-%m-%dT%H:%M:%SZ");
+    const parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S"); //d3.utcParse("%Y-%m-%dT%H:%M:%SZ");
     const formatTime = d3.timeFormat("%d/%m/%Y %H:%M");
     const bisectDate = d3.bisector(d => d.datetime).left;
 
@@ -116,24 +130,33 @@ export default {
     };
 
     // Generate mock data if needed
-    const generateMockData = () => {
-      const now = new Date();
-      const data = [];
-      // Generate 24 hours of data at 1 minute intervals
-      for (let i = 0; i < 24 * 60; i++) {
-        const time = new Date(now.getTime() - (24 * 60 * 60 * 1000) + (i * 60 * 1000));
-        // Create a realistic RoCoF value with some randomness
-        // RoCoF typically ranges from -0.3 to 0.3 Hz/s
-        const baseValue = Math.sin(i/60 * Math.PI) * 0.15; // Oscillating base
-        const randomness = (Math.random() - 0.5) * 0.1; // Random element
-        const value = baseValue + randomness;
-        
-        data.push({
-          datetime: time,
-          value: value
-        });
+    const getData = async () => {
+      let rocofs = await getRocofs();
+      console.log("rocofs", rocofs);
+      let latest = (rocofs && rocofs.length > 0) ? rocofs[0] : null;
+      console.log("latest: ", latest);
+      if(latest) {
+        frequency.value = latest.f;
+        rocof.value = latest.rocof;
       }
-      return data;
+
+      // const now = new Date();
+      // const data = [];
+      // // Generate 24 hours of data at 1 minute intervals
+      // for (let i = 0; i < 24 * 60; i++) {
+      //   const time = new Date(now.getTime() - (24 * 60 * 60 * 1000) + (i * 60 * 1000));
+      //   // Create a realistic RoCoF value with some randomness
+      //   // RoCoF typically ranges from -0.3 to 0.3 Hz/s
+      //   const baseValue = Math.sin(i/60 * Math.PI) * 0.15; // Oscillating base
+      //   const randomness = (Math.random() - 0.5) * 0.1; // Random element
+      //   const value = baseValue + randomness;
+        
+      //   data.push({
+      //     datetime: time,
+      //     value: value
+      //   });
+      // }
+      return rocofs;
     };
 
     // Load data and update
@@ -147,12 +170,17 @@ export default {
         // const data = await response.json();
         
         // For this example, we'll use generated data
-        const data = generateMockData();
+        const data = await getData();
         
-        fullData = data.map(d => ({
-          datetime: d.datetime instanceof Date ? d.datetime : parseTime(d.datetime),
-          value: typeof d.value === 'number' ? d.value : +d.value
-        })).filter(d => d.datetime && !isNaN(d.value));
+        fullData = data.map(d => {
+          // console.log("datetime:", d.dateTime instanceof Date ? d.dateTime : parseTime(d.dateTime));
+          return ({
+          datetime: d.dateTime instanceof Date ? d.dateTime : parseTime(d.dateTime),
+          value: typeof d.rocof === 'number' ? d.rocof : +d.rocof
+        })
+      }).filter(d => d.datetime && !isNaN(d.value));
+
+        // console.log("full Data", fullData);
 
         // Sort data by time
         fullData.sort((a, b) => a.datetime - b.datetime);
@@ -301,16 +329,24 @@ export default {
 
     onMounted(() => {
       // Wait for DOM to be ready
-      setTimeout(() => {
+      setTimeout(async () => {
         initChart();
-        loadData();
-      }, 200);
+        await loadData();
+      }, 2000);
+
+      // Refresh data every 5 seconds
+      intervalId = setInterval(async () => {
+        await loadData();
+      }, 5000);
       
       window.addEventListener('resize', handleResize);
     });
 
     onBeforeUnmount(() => {
       window.removeEventListener('resize', handleResize);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     });
 
     return {
@@ -322,7 +358,9 @@ export default {
       sliderStep,
       updateChart,
       loading,
-      error
+      error,
+      frequency,
+      rocof
     };
   }
 }
