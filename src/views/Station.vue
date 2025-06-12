@@ -16,20 +16,21 @@
             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             @input="filterStations" />
         </div>
-        <button v-if="selectedStation" @click="setModal()"
-          class="bg-[#1e293b] hover:bg-[#00293b] text-white p-2 rounded-md flex gap-2">
-          <Plus class="w-6 h-6" /> Add Line
-        </button>
       </section>
 
-      <div v-if="selectedStation?.lines.length">
-
+      <div>
         <section v-if="selectedStation" class="space-y-4">
           <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600 border-b">Connected Lines</label>
-            <div class="grid grid-cols-4 flex-wrap gap-3 w-full">
-              <div v-for="(line, index) in selectedStation?.lines" :key="index"
-                class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
+            <section class="flex items-center justify-between text-xs border-b pb-2">
+              <label class="text-sm font-medium text-gray-600 ">Connected Lines</label>
+              <button v-if="selectedStation" @click="setModal()"
+                class="bg-[#1e293b] hover:bg-[#00293b] text-white p-1 rounded-md flex gap-1">
+                <Plus class="w-4 h-4" /> Add Line
+              </button>
+            </section>
+            <div v-if="selectedStation?.lines.length" class="grid grid-cols-4 flex-wrap gap-3 w-full">
+              <div v-for="(line, index) in selectedStation?.lines" :key="index" @click="openModal(line)"
+                class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
                 :class="{
                   'border-l-blue-500': line.voltageLevel < 100,
                   'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
@@ -65,28 +66,49 @@
                 </div>
               </div>
             </div>
+
+            <div v-else class="text-sm text-gray-500 italic">
+              No line found.
+            </div>
+
           </div>
 
-          <!-- <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600 border-b">Connected Transformers</label>
-            <div class="grid grid-cols-4 flex-wrap gap-3">
-              <div v-for="(line, index) in selectedStation?.lines" :key="index"
-                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
-                :class="{
-                  'border-l-blue-500': line.voltageLevel < 100,
-                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                  'border-l-orange-500': line.voltageLevel >= 200
-                }">
-                <div class="space-y-1">
-                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
+          <section class="flex items-center justify-between text-xs border-b pb-2">
+            <label class="text-sm font-medium text-gray-600">Connected Transformers</label>
+            <button @click="setModal2()" class="bg-[#1e293b] hover:bg-[#00293b] text-white p-1 rounded-md flex gap-1">
+              <Plus class="w-4 h-4" /> Add Transformer
+            </button>
+          </section>
+
+          <div v-if="selectedStation?.transformers.length" class="grid grid-cols-4 flex-wrap gap-3 w-full">
+            <div v-for="(xf, idx) in selectedStation.transformers" :key="idx" @click="openModal(xf)"
+              class="w-full flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md cursor-pointer"
+              :class="{
+                'border-l-blue-500': xf.powerRating < 50,
+                'border-l-green-500': xf.powerRating >= 50 && xf.powerRating < 150,
+                'border-l-orange-500': xf.powerRating >= 150
+              }">
+              <div class="w-full space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="block text-sm font-medium text-gray-800">{{ xf.name }}</span>
+                  <div class="flex items-center gap-2">
+                    <p v-if="xf.serialNo" class="bg-green-200 px-2 py-1 rounded-md text-xs">
+                      {{ xf.serialNo }}
+                    </p>
+                    <SplinePointer @click="openModal(xf)" title="+ add connection"
+                      class="w-4 h-4 cursor-pointer hover:text-blue-500 flex-shrink-0" />
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between">
                   <div class="flex items-center gap-1">
-                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
+                    <span class="text-xs font-medium text-gray-500">Rating:</span>
                     <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
-                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
+                      'bg-blue-100 text-blue-800': xf.powerRating < 50,
+                      'bg-green-100 text-green-800': xf.powerRating >= 50 && xf.powerRating < 150,
+                      'bg-orange-100 text-orange-800': xf.powerRating >= 150
                     }">
-                      {{ line.voltageLevel }}kV
+                      {{ xf.powerRating }} {{ xf.powerRatingUnit.toUpperCase() }}
                     </span>
                   </div>
                 </div>
@@ -94,7 +116,11 @@
             </div>
           </div>
 
-          <div class="grid gap-3">
+          <div v-else class="text-sm text-gray-500 italic">
+            No Transformer found.
+          </div>
+
+          <!-- <div class="grid gap-3">
             <label class="text-sm font-medium text-gray-600 border-b">Connected Breakers</label>
             <div class="grid grid-cols-4 flex-wrap gap-3">
               <div v-for="(line, index) in selectedStation?.lines" :key="index"
@@ -152,9 +178,9 @@
       </div>
 
 
-      <div v-else class="text-sm text-gray-500 italic">
+      <!-- <div v-else class="text-sm text-gray-500 italic">
         No connection found.
-      </div>
+      </div> -->
 
       <section v-if="modal"
         class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
@@ -182,6 +208,74 @@
           <template #footer>
             <el-button type="danger" @click="onAction">Cancel</el-button>
             <el-button type="primary" @click="submit">
+              {{ isEditMode ? 'Save' : 'Add' }}
+            </el-button>
+            <p>{{ message }}</p>
+          </template>
+
+        </el-card>
+      </section>
+
+      <section v-if="modal2"
+        class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
+        <el-card class="max-w-sm mx-auto w-[30rem]">
+          <template #header>
+            <h2>Add Transformer</h2>
+          </template>
+
+          <form class="space-y-2">
+            <div class="grid">
+              <label for="transformerName">Name:</label>
+              <input id="transformerName" v-model="name" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid">
+              <label for="manufacturerId">Manufacturer ID:</label>
+              <input id="manufacturerId" v-model.number="manufacturerId" type="number"
+                class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid">
+              <label for="serialNo">Serial Number:</label>
+              <input id="serialNo" v-model="serialNo" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="powerRating">Power Rating:</label>
+                <input id="powerRating" v-model.number="powerRating" type="number"
+                  class="border rounded-lg p-2 w-full" />
+              </div>
+              <div>
+                <label for="powerRatingUnit">Unit:</label>
+                <select id="powerRatingUnit" v-model="powerRatingUnit" class="border rounded-lg p-2 w-full">
+                  <option value="mva">MVA</option>
+                  <option value="kva">KVA</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid">
+              <label for="typeOfCooling">Cooling Type:</label>
+              <input id="typeOfCooling" v-model="typeOfCooling" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid">
+              <label for="voltageRating">Voltage Rating:</label>
+              <input id="voltageRating" v-model="voltageRating" type="text" class="border rounded-lg p-2 w-full" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label for="manufactureYear">Manufacture Year:</label>
+                <input id="manufactureYear" v-model.number="manufactureYear" type="number"
+                  class="border rounded-lg p-2 w-full" />
+              </div>
+              <div>
+                <label for="installationYear">Installation Year:</label>
+                <input id="installationYear" v-model.number="installationYear" type="number"
+                  class="border rounded-lg p-2 w-full" />
+              </div>
+            </div>
+          </form>
+
+          <template #footer>
+            <el-button type="danger" @click="onAction2">Cancel</el-button>
+            <el-button type="primary" @click="submit2">
               {{ isEditMode ? 'Save' : 'Add' }}
             </el-button>
             <p>{{ message }}</p>
@@ -253,6 +347,37 @@
             </div>
           </div>
 
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+              <label for="fromLine" class="block text-sm font-medium text-gray-700 mb-1">
+                From Side
+              </label>
+              <select id="fromLine" v-model="fromSide"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+
+            <ArrowRight class="w-6 h-6 text-gray-500 self-center md:mt-6" />
+
+            <div class="flex-1">
+              <label for="toLine" class="block text-sm font-medium text-gray-700 mb-1">
+                To Side
+              </label>
+              <select id="toLine" v-model="toSide"
+                class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="top">Top</option>
+                <option value="bottom">Bottom</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+
+
           <div class="flex justify-end space-x-4 pt-4 border-t">
             <el-button type="danger" @click="showConnectionModal = false">Cancel</el-button>
             <el-button type="primary" @click="createConnection">Save</el-button>
@@ -266,7 +391,7 @@
 </template>
 
 <script>
-import { getStation, addLine, addConnection, deleteStation, getStations } from '@/services/stationService'
+import { getStation, addLine, addConnection, deleteStation, getStations, addTransformer } from '@/services/stationService'
 import { Plus, SplinePointer, ArrowRight } from 'lucide-vue-next'
 import { ElCard, ElButton } from 'element-plus'
 
@@ -288,11 +413,22 @@ export default {
       display: true,
       message: '',
       modal: false,
+      modal2: false,
       fromStationId: '',
       fromLineId: '',
       toStationId: '',
       toLineId: '',
+      fromSide: 'top',
+      toSide: 'bottom',
       showConnectionModal: false,
+      manufacturerId: null,
+      serialNo: '',
+      powerRating: null,
+      powerRatingUnit: 'mva',
+      typeOfCooling: '',
+      voltageRating: '',
+      manufactureYear: null,
+      installationYear: null,
     }
   },
   computed: {
@@ -332,14 +468,58 @@ export default {
       this.message = `Created station #${resp.data.id}`
     },
 
+    async submit2() {
+      try {
+        let resp
+        resp = await addTransformer({
+          name: this.name,
+          manufacturerId: this.manufacturerId,
+          serialNo: this.serialNo,
+          powerRating: this.powerRating,
+          powerRatingUnit: this.powerRatingUnit,
+          typeOfCooling: this.typeOfCooling,
+          voltageRating: this.voltageRating,
+          manufactureYear: this.manufactureYear,
+          installationYear: this.installationYear,
+          stationId: this.selectedStation.tableId,
+        })
+      } catch {
+        this.message = 'Save failed'
+        return;
+      }
+      this.selectedStation.transformers.push({
+        name: this.name,
+        manufacturerId: this.manufacturerId,
+        serialNo: this.serialNo,
+        powerRating: this.powerRating,
+        powerRatingUnit: this.powerRatingUnit,
+        typeOfCooling: this.typeOfCooling,
+        voltageRating: this.voltageRating,
+        manufactureYear: this.manufactureYear,
+        installationYear: this.installationYear
+      })
+      this.modal2 = false
+      this.message = `Created station #${resp.data.id}`
+    },
+
     setModal() {
       this.modal = true;
+      this.message = '';
+    },
+
+    setModal2() {
+      this.modal2 = true;
       this.message = '';
     },
 
     onAction() {
       this.modal = false
     },
+
+    onAction2() {
+      this.modal2 = false
+    },
+
     viewStation(id) {
       this.$router.push({ name: 'Station', params: { id } })
     },
@@ -373,18 +553,18 @@ export default {
       try {
         console.log(this.selectedStation);
         let lineArr = this.selectedStation.lines.filter((line) => (line.tableId == this.fromLineId) || (line.tableId == this.toLineId))
-        let resp;
-        if(lineArr) {
-            resp = await addConnection({
-
+        if (lineArr) {
+          let resp
+          resp = await addConnection({
             identifier: lineArr[0].id,
             fromStationId: this.fromStationId,
             fromLineId: this.fromLineId,
             toStationId: this.toStationId,
             toLineId: this.toLineId,
-
+            fromSide: this.fromSide,
+            toSide: this.toSide,
           })
-        }else{
+        } else {
           this.message = "cannot find the appropriate line";
           console.log("lineArr", lineArr);
           return;

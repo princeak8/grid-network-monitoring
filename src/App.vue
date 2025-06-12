@@ -137,7 +137,7 @@ console.log("auth: ", authStore)
 const isAuthenticated = computed(() => authStore.isAuthenticated);
 const userInitials = computed(() => `${authStore.user.name.split('')[0].toUpperCase()}`);
 const userFullName = computed(() => authStore.user.name);
-const userRole = computed(() => authStore.user?.role || '');
+const userRole = computed(() => authStore.user?.role?.name || '');
 
 const currentPageTitle = computed(() => {
   const routeName = route.name?.toString() || '';
