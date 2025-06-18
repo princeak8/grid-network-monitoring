@@ -14,6 +14,37 @@
       </button>
     </section>
 
+    <!-- Tabs Section -->
+    <section class="mb-6">
+      <div class="border-b border-gray-200">
+        <nav class="-mb-px flex space-x-8">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            :class="[
+              'py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap',
+              activeTab === tab.id
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            ]"
+          >
+            {{ tab.name }}
+            <span
+              :class="[
+                'ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium',
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-600'
+                  : 'bg-gray-100 text-gray-900'
+              ]"
+            >
+              {{ getTabCount(tab.id) }}
+            </span>
+          </button>
+        </nav>
+      </div>
+    </section>
+
     <!-- Loading State -->
     <div v-if="loading" class="flex justify-center items-center py-8">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -37,24 +68,36 @@
               Voltage Level</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Location</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Type</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No.
-              of Lines</th>
+              of {{ (activeTab == 'generation') ? 'Units' : 'Lines'}}</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Action</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-if="filteredStations.length === 0">
-            <td colspan="6" class="px-6 py-4 text-center text-gray-500">
+          <tr v-if="displayedStations.length === 0">
+            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
               No stations found
             </td>
           </tr>
-          <tr v-for="(station, index) in filteredStations" :key="station.id" class="hover:bg-gray-50">
+          <tr v-for="(station, index) in displayedStations" :key="station.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ index + 1 }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ station.name }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.voltageLevel }} kV</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.location }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ station.lines.length }}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <span :class="[
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                station.type === 'transmission' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : 'bg-green-100 text-green-800'
+              ]">
+                {{ station.type }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ (activeTab == 'generation') ? station.units?.length : station.lines?.length || 0 }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
               <div class="flex space-x-2">
                 <button @click="viewStation(station.id)" class="text-blue-600 hover:text-blue-900">
@@ -73,139 +116,7 @@
       </table>
     </div>
 
-    <!-- <section v-if="view"
-      class="fixed inset-0 flex items-center justify-center w-full h-screen bg-gray-900 bg-opacity-50 backdrop-blur-sm overflow-y-auto">
-      <el-card class="w-full max-w-4xl mx-4 mt-60 ">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold text-gray-800">
-              {{ selectedStation.name }}
-            </h2>
-          </div>
-        </template>
-
-        <section class="space-y-4">
-          <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600 border-b">Connected Lines</label>
-            <div class="grid grid-cols-4 flex-wrap gap-3">
-              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
-                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
-                :class="{
-                  'border-l-blue-500': line.voltageLevel < 100,
-                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                  'border-l-orange-500': line.voltageLevel >= 200
-                }">
-                <div class="space-y-1">
-                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
-                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
-                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
-                    }">
-                      {{ line.voltageLevel }}kV
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-           <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600 border-b">Connected Transformers</label>
-            <div class="grid grid-cols-4 flex-wrap gap-3">
-              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
-                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
-                :class="{
-                  'border-l-blue-500': line.voltageLevel < 100,
-                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                  'border-l-orange-500': line.voltageLevel >= 200
-                }">
-                <div class="space-y-1">
-                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
-                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
-                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
-                    }">
-                      {{ line.voltageLevel }}kV
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-           <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600 border-b">Connected Breakers</label>
-            <div class="grid grid-cols-4 flex-wrap gap-3">
-              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
-                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
-                :class="{
-                  'border-l-blue-500': line.voltageLevel < 100,
-                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                  'border-l-orange-500': line.voltageLevel >= 200
-                }">
-                <div class="space-y-1">
-                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
-                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
-                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
-                    }">
-                      {{ line.voltageLevel }}kV
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-           <div class="grid gap-3">
-            <label class="text-sm font-medium text-gray-600 border-b">Battery Banks</label>
-            <div class="grid grid-cols-4 flex-wrap gap-3">
-              <div v-for="(line, index) in dummyStations[0].lines" :key="index"
-                class="flex items-center justify-between flex-1 p-4 transition-all duration-200 bg-white border-l-4 border rounded-md shadow-sm min-w-[150px] hover:shadow-md"
-                :class="{
-                  'border-l-blue-500': line.voltageLevel < 100,
-                  'border-l-green-500': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                  'border-l-orange-500': line.voltageLevel >= 200
-                }">
-                <div class="space-y-1">
-                  <span class="block text-sm font-medium text-gray-800">{{ line.name }}</span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs font-medium text-gray-500">Voltage:</span>
-                    <span class="px-2 py-1 text-xs font-bold rounded-full" :class="{
-                      'bg-blue-100 text-blue-800': line.voltageLevel < 100,
-                      'bg-green-100 text-green-800': line.voltageLevel >= 100 && line.voltageLevel < 200,
-                      'bg-orange-100 text-orange-800': line.voltageLevel >= 200
-                    }">
-                      {{ line.voltageLevel }}kV
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </section>
-
-        <template #footer>
-          <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-500">{{ message }}</p>
-            <el-button type="primary" @click="onAction" class="px-6 py-2 font-medium">
-              Close Panel
-            </el-button>
-          </div>
-        </template>
-      </el-card>
-    </section> -->
-
+    <!-- Modal Section -->
     <section v-if="modal"
       class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
       <el-card class="max-w-sm mx-auto w-[30rem]">
@@ -218,26 +129,26 @@
         <form class="space-y-2">
           <div class="grid">
             <label for="name">Name:</label>
-            <input id="name" v-model="name" type="text" class="border rounded-lg p-2 w-full" />
+            <input id="name" v-model="formData.name" type="text" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
             <label for="identifier">Identifier:</label>
-            <input id="identifier" v-model="identifier" type="text" class="border rounded-lg p-2 w-full" />
+            <input id="identifier" v-model="formData.identifier" type="text" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
             <label for="voltageLevel">Voltage Level:</label>
-            <input id="voltageLevel" v-model.number="voltageLevel" type="number" class="border rounded-lg p-2 w-full" />
+            <input id="voltageLevel" v-model.number="formData.voltageLevel" type="number" class="border rounded-lg p-2 w-full" />
           </div>
           <div class="grid">
             <label for="type">Type:</label>
-            <select id="type" v-model="type" class="border rounded-lg p-2 w-full">
+            <select id="type" v-model="formData.type" class="border rounded-lg p-2 w-full">
               <option value="transmission">Transmission</option>
               <option value="generation">Generation</option>
             </select>
           </div>
           <div class="grid">
             <label for="display">Display:</label>
-            <select id="display" v-model="display" class="border rounded-lg p-2 w-full">
+            <select id="display" v-model="formData.display" class="border rounded-lg p-2 w-full">
               <option :value="true">True</option>
               <option :value="false">False</option>
             </select>
@@ -257,185 +168,187 @@
   </div>
 </template>
 
-<script>
-import axios from 'axios';
-import { ref } from 'vue';
-import { fetchAllStations } from '@/apiUtils';
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { Plus } from 'lucide-vue-next';
 import { ElCard, ElButton } from 'element-plus';
 import 'element-plus/dist/index.css';
 import { createStation, getStations, updateStation, deleteStation } from '@/services/stationService';
 
-const name = ref('');
-const identifier = ref('');
-const voltageLevel = ref('');
-const display = ref(true);
-const type = ref('transmission');
+// Router
+const router = useRouter();
+
+// Reactive data
+const stations = ref([]);
+const searchQuery = ref('');
+const loading = ref(true);
+const error = ref(null);
+const modal = ref(false);
+const isEditMode = ref(false);
+const currentStationId = ref(null);
 const message = ref('');
+const activeTab = ref('all');
 
-// const handleSubmit = async () => {
-//   try {
-//     const { data } = await createStation({
-//       name: name.value,
-//       identifier: identifier.value,
-//       voltageLevel: voltageLevel.value,
-//       display: display.value,
-//     });
-//     message.value = `Station created with ID ${data.id}`;
-//   } catch (err) {
-//     console.error(err);
-//     message.value = 'Failed to create station';
-//   }
-// };
+// Form data
+const formData = ref({
+  name: '',
+  identifier: '',
+  voltageLevel: null,
+  display: true,
+  type: 'transmission'
+});
 
+// Tab configuration
+const tabs = ref([
+  { id: 'all', name: 'All' },
+  { id: 'transmission', name: 'Transmission' },
+  { id: 'generation', name: 'Generation' }
+]);
 
-export default {
-  name: 'StationsView',
-  components: { Plus, ElCard, ElButton },
-  computed: {
-    selectedStation() {
-      return this.stations.find(station => station.id === this.currentStationId) || {
-        lines: [],
-        x: 0,
-        y: 0,
-        display: false,
-        voltageLevel: 0,
-        type: 'transmission'
-      };
-    }
-  },
-  data() {
-    return {
+// Computed properties
+const filteredStations = computed(() => {
+  if (!searchQuery.value) {
+    return stations.value;
+  }
+
+  const query = searchQuery.value.toLowerCase();
+  return stations.value.filter(station =>
+    station.name.toLowerCase().includes(query) ||
+    station.location?.toLowerCase().includes(query) ||
+    station.voltageLevel.toString().includes(query)
+  );
+});
+
+const displayedStations = computed(() => {
+  const filtered = filteredStations.value;
+  
+  if (activeTab.value === 'all') {
+    return filtered;
+  }
+  
+  return filtered.filter(station => station.type === activeTab.value);
+});
+
+const selectedStation = computed(() => {
+  return stations.value.find(station => station.id === currentStationId.value) || {
+    lines: [],
+    x: 0,
+    y: 0,
+    display: false,
+    voltageLevel: 0,
+    type: 'transmission'
+  };
+});
+
+// Methods
+const getTabCount = (tabId: string) => {
+  if (tabId === 'all') {
+    return filteredStations.value.length;
+  }
+  return filteredStations.value.filter(station => station.type === tabId).length;
+};
+
+const fetchStations = async () => {
+  loading.value = true;
+  error.value = null;
+  try {
+    const stationsData = await getStations();
+    stations.value = stationsData;
+  } catch (err) {
+    console.error(err);
+    error.value = 'Unable to load stations.';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const filterStations = () => {
+  // This function is called on input, but the actual filtering
+  // is handled by the filteredStations computed property
+};
+
+const setModal = (station = null) => {
+  if (station) {
+    isEditMode.value = true;
+    currentStationId.value = station.id;
+    formData.value = {
+      name: station.name,
+      identifier: station.identifier,
+      voltageLevel: station.voltageLevel,
+      display: station.display,
+      type: station.type
+    };
+  } else {
+    isEditMode.value = false;
+    currentStationId.value = null;
+    formData.value = {
       name: '',
       identifier: '',
       voltageLevel: null,
       display: true,
-      type: 'transmission',
-      message: '',
-      stations: [],
-      filteredStations: [],
-      searchQuery: '',
-      loading: true,
-      error: null,
-      modal: false,
-      isEditMode: false,
-      currentStationId: null,
-      view: false,
+      type: 'transmission'
+    };
+  }
+  message.value = '';
+  modal.value = true;
+};
 
-      
-
+const submit = async () => {
+  try {
+    let response;
+    if (isEditMode.value) {
+      response = await updateStation(currentStationId.value, formData.value);
+      message.value = `Station #${currentStationId.value} updated`;
+    } else {
+      console.log("type:", formData.value.type);
+      response = await createStation(formData.value);
+      message.value = `Station created`;
     }
-  },
-  mounted() {
-    this.fetchStations();
-  },
-
-  methods: {
-    async submit() {
-      try {
-        let response;
-        if (this.isEditMode) {
-          response = await updateStation(this.currentStationId, {
-            name: this.name,
-            identifier: this.identifier,
-            voltageLevel: this.voltageLevel,
-            display: this.display,
-            type: this.type
-          });
-          this.message = `Station #${this.currentStationId} updated`;
-        } else {
-          console.log("type:", this.type);
-          response = await createStation({
-            name: this.name,
-            identifier: this.identifier,
-            voltageLevel: this.voltageLevel,
-            display: this.display,
-            type: this.type
-          });
-          this.message = `Station created`;
-        }
-        this.modal = false;
-        this.fetchStations();
-      } catch (err) {
-        console.error(err);
-        this.message = this.isEditMode
-          ? 'Failed to update station'
-          : 'Failed to create station';
-      }
-    },
-
-    setModal(station = null) {
-      if (station) {
-        this.isEditMode = true;
-        this.currentStationId = station.id;
-        this.name = station.name;
-        this.identifier = station.identifier;
-        this.voltageLevel = station.voltageLevel;
-        this.display = station.display;
-      } else {
-        this.isEditMode = false;
-        this.currentStationId = null;
-        this.name = '';
-        this.identifier = '';
-        this.voltageLevel = null;
-        this.display = true;
-      }
-      this.message = '';
-      this.modal = true;
-    },
-
-    setView(station) {
-      this.currentStationId = station.id;
-      this.view = true;
-    },
-
-    onAction() {
-      this.modal = false;
-      this.view = false;
-    },
-
-    async fetchStations() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const stations = await getStations();
-        this.stations = stations;
-        this.filteredStations = [...stations];
-      } catch (err) {
-        console.error(err);
-        this.error = 'Unable to load stations.';
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    filterStations() {
-      if (!this.searchQuery) {
-        this.filteredStations = [...this.stations];
-        return;
-      }
-
-      const query = this.searchQuery.toLowerCase();
-      this.filteredStations = this.stations.filter(station =>
-        station.name.toLowerCase().includes(query) ||
-        station.location.toLowerCase().includes(query) ||
-        station.voltageLevel.toString().includes(query)
-      );
-    },
-    viewStation(id) {
-      this.$router.push(`/station/${id}`);
-    },
-    editStation(id) {
-      this.$router.push(`/stations/${id}/edit`);
-    },
-    deleteStation(id) {
-      if (confirm('Are you sure you want to delete this station?')) {
-        // Implement your delete logic here
-        console.log(`Deleting station with ID: ${id}`);
-        // After successful deletion, refresh the list
-        // this.fetchStations();
-      }
-    }
+    modal.value = false;
+    await fetchStations();
+  } catch (err) {
+    console.error(err);
+    message.value = isEditMode.value
+      ? 'Failed to update station'
+      : 'Failed to create station';
   }
 };
+
+const onAction = () => {
+  modal.value = false;
+};
+
+const viewStation = (id: number | string) => {
+  router.push(`/station/${id}`);
+};
+
+const editStation = (id: number | string) => {
+  router.push(`/stations/${id}/edit`);
+};
+
+const deleteStationHandler = (id: number | string) => {
+  if (confirm('Are you sure you want to delete this station?')) {
+    console.log(`Deleting station with ID: ${id}`);
+    // Implement your delete logic here
+    // After successful deletion, refresh the list
+    // fetchStations();
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchStations();
+});
+
+// Watch for search query changes to reset to 'All' tab when searching
+watch(searchQuery, (newQuery) => {
+  if (newQuery && activeTab.value !== 'all') {
+    activeTab.value = 'all';
+  }
+});
 </script>
+
+<style scoped>
+/* Add any additional custom styles here if needed */
+</style>

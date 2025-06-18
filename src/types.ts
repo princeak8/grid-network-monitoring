@@ -9,16 +9,27 @@ export interface Line {
     outgoingConnections?: Connection[];
     incomingConnections?: Connection[];
   }
+
+export interface Unit {
+    tableId?: number;
+    id: string;
+    name?: string;
+    inertia?: number;
+    active?: boolean;
+    voltageLevel?: number
+}
   
 export  interface Station {
     tableId?: number;
     id: string;
     name: string;
+    voltageLevel?: number
     x: number;
     y: number;
     width: number;
     height: number;
     lines: Line[];
+    units?: Unit[]
 }
 
 export interface ApiStation {

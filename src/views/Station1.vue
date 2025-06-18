@@ -75,7 +75,7 @@
 
 
           <!--  Units -->
-          <UnitSection v-if="selectedStation.type == StationType.GENERATION" :station="selectedStation" :units="selectedStation.units" @fetchStation="fetchStation(stationId)"  />
+          <UnitSection :station="selectedStation" :units="selectedStation.units" />
 
           <section class="flex items-center justify-between text-xs border-b pb-2">
             <label class="text-sm font-medium text-gray-600">Connected Transformers</label>
@@ -394,201 +394,207 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+<script>
 import { getStation, addLine, addConnection, deleteStation, getStations, addTransformer } from '@/services/stationService'
 import { Plus, SplinePointer, ArrowRight } from 'lucide-vue-next'
 import { ElCard, ElButton } from 'element-plus'
 import UnitSection from '@/components/UnitSection.vue'
-import { StationType } from '@/enums'
 
-const route = useRoute()
-const stationId = route.params.id
+export default {
+  name: 'StationView',
+  components: { Plus, SplinePointer, ArrowRight, ElCard, ElButton },
+  data() {
+    return {
+      selectedStation: null,
+      stations: [],
+      filteredStations: [],
+      searchQuery: '',
+      loading: true,
+      error: null,
+      isEditMode: false,
+      name: '',
+      identifier: '',
+      voltageLevel: null,
+      display: true,
+      message: '',
+      modal: false,
+      modal2: false,
+      fromStationId: '',
+      fromLineId: '',
+      toStationId: '',
+      toLineId: '',
+      fromSide: 'top',
+      toSide: 'bottom',
+      showConnectionModal: false,
+      manufacturerId: null,
+      serialNo: '',
+      powerRating: null,
+      powerRatingUnit: 'mva',
+      typeOfCooling: '',
+      voltageRating: '',
+      manufactureYear: null,
+      installationYear: null,
+    }
+  },
+  computed: {
+    stationId() {
+      return this.$route.params.id
+    }
+  },
+  async mounted() {
+    console.log('Detail component mounted, stationId =', this.stationId)
+    if (this.stationId) {
+      try {
+        this.fetchStations()
+        this.selectedStation = await getStation(this.stationId)
+        console.log("selected station", this.selectedStation);
+      } catch {
+        this.error = `Failed to load station #${this.stationId}`
+      }
+    }
 
-// Reactive state
-const selectedStation = ref(null)
-const stations = ref([])
-const filteredStations = ref([])
-const searchQuery = ref('')
-const loading = ref(true)
-const error = ref(null)
-const isEditMode = ref(false)
-const name = ref('')
-const identifier = ref('')
-const voltageLevel = ref(null)
-const display = ref(true)
-const message = ref('')
-const modal = ref(false)
-const modal2 = ref(false)
-const fromStationId = ref('')
-const fromLineId = ref('')
-const toStationId = ref('')
-const toLineId = ref('')
-const fromSide = ref('top')
-const toSide = ref('bottom')
-const showConnectionModal = ref(false)
-const manufacturerId = ref(null)
-const serialNo = ref('')
-const powerRating = ref(null)
-const powerRatingUnit = ref('mva')
-const typeOfCooling = ref('')
-const voltageRating = ref('')
-const manufactureYear = ref(null)
-const installationYear = ref(null)
+    this.loading = false
+  },
+  methods: {
+    async submit() {
+      try {
+        let resp
+        resp = await addLine({
+          name: this.name,
+          identifier: this.identifier,
+          voltageLevel: this.voltageLevel,
+          stationId: this.selectedStation.tableId,
+        })
+      } catch {
+        this.message = 'Save failed'
+        return;
+      }
+      this.selectedStation.lines.push({ name: this.name, voltageLevel: this.voltageLevel })
+      this.modal = false
+      this.message = `Created station #${resp.data.id}`
+    },
 
-// Computed properties
-const computedStationId = computed(() => route.params.id)
-
-// Methods
-const submit = async () => {
-  try {
-    const resp = await addLine({
-      name: name.value,
-      identifier: identifier.value,
-      voltageLevel: voltageLevel.value,
-      stationId: selectedStation.value.tableId,
-    })
-    selectedStation.value.lines.push({ name: name.value, voltageLevel: voltageLevel.value })
-    modal.value = false
-    message.value = `Created station #${resp.data.id}`
-  } catch {
-    message.value = 'Save failed'
-  }
-}
-
-const submit2 = async () => {
-  try {
-    const resp = await addTransformer({
-      name: name.value,
-      manufacturerId: manufacturerId.value,
-      serialNo: serialNo.value,
-      powerRating: powerRating.value,
-      powerRatingUnit: powerRatingUnit.value,
-      typeOfCooling: typeOfCooling.value,
-      voltageRating: voltageRating.value,
-      manufactureYear: manufactureYear.value,
-      installationYear: installationYear.value,
-      stationId: selectedStation.value.tableId,
-    })
-    selectedStation.value.transformers.push({
-      name: name.value,
-      manufacturerId: manufacturerId.value,
-      serialNo: serialNo.value,
-      powerRating: powerRating.value,
-      powerRatingUnit: powerRatingUnit.value,
-      typeOfCooling: typeOfCooling.value,
-      voltageRating: voltageRating.value,
-      manufactureYear: manufactureYear.value,
-      installationYear: installationYear.value
-    })
-    modal2.value = false
-    message.value = `Created station #${resp.data.id}`
-  } catch {
-    message.value = 'Save failed'
-  }
-}
-
-const setModal = () => {
-  modal.value = true
-  message.value = ''
-}
-
-const setModal2 = () => {
-  modal2.value = true
-  message.value = ''
-}
-
-const onAction = () => {
-  modal.value = false
-}
-
-const onAction2 = () => {
-  modal2.value = false
-}
-
-const viewStation = (id) => {
-  router.push({ name: 'Station', params: { id } })
-}
-
-const openModal = (line) => {
-  fromStationId.value = selectedStation.value.tableId
-  fromLineId.value = line.tableId
-  showConnectionModal.value = true
-}
-
-const linesForStation = (id) => {
-  const station = stations.value.find(s => s.tableId === id)
-  return station ? station.lines : []
-}
-
-const linesToStation = (id) => {
-  const station = stations.value.find(s => s.tableId === id)
-  return station ? station.lines : []
-}
-
-const filterStations = () => {
-  const q = searchQuery.value.toLowerCase()
-  filteredStations.value = stations.value.filter(s =>
-    s.name.toLowerCase().includes(q) ||
-    (s.location || '').toLowerCase().includes(q) ||
-    s.voltageLevel.toString().includes(q)
-  )
-}
-
-const createConnection = async () => {
-  try {
-    console.log(selectedStation.value)
-    let lineArr = selectedStation.value.lines.filter((line) => (line.tableId == fromLineId.value) || (line.tableId == toLineId.value))
-    if (lineArr) {
-      const resp = await addConnection({
-        identifier: lineArr[0].id,
-        fromStationId: fromStationId.value,
-        fromLineId: fromLineId.value,
-        toStationId: toStationId.value,
-        toLineId: toLineId.value,
-        fromSide: fromSide.value,
-        toSide: toSide.value,
+    async submit2() {
+      try {
+        let resp
+        resp = await addTransformer({
+          name: this.name,
+          manufacturerId: this.manufacturerId,
+          serialNo: this.serialNo,
+          powerRating: this.powerRating,
+          powerRatingUnit: this.powerRatingUnit,
+          typeOfCooling: this.typeOfCooling,
+          voltageRating: this.voltageRating,
+          manufactureYear: this.manufactureYear,
+          installationYear: this.installationYear,
+          stationId: this.selectedStation.tableId,
+        })
+      } catch {
+        this.message = 'Save failed'
+        return;
+      }
+      this.selectedStation.transformers.push({
+        name: this.name,
+        manufacturerId: this.manufacturerId,
+        serialNo: this.serialNo,
+        powerRating: this.powerRating,
+        powerRatingUnit: this.powerRatingUnit,
+        typeOfCooling: this.typeOfCooling,
+        voltageRating: this.voltageRating,
+        manufactureYear: this.manufactureYear,
+        installationYear: this.installationYear
       })
-      selectedStation.value.lines.push({ name: name.value, voltageLevel: voltageLevel.value })
-      message.value = `Saved Connection`
-      modal.value = false
-      showConnectionModal.value = false
-    } else {
-      message.value = "cannot find the appropriate line"
-      console.log("lineArr", lineArr)
+      this.modal2 = false
+      this.message = `Created station #${resp.data.id}`
+    },
+
+    setModal() {
+      this.modal = true;
+      this.message = '';
+    },
+
+    setModal2() {
+      this.modal2 = true;
+      this.message = '';
+    },
+
+    onAction() {
+      this.modal = false
+    },
+
+    onAction2() {
+      this.modal2 = false
+    },
+
+    viewStation(id) {
+      this.$router.push({ name: 'Station', params: { id } })
+    },
+
+    openModal(line) {
+      this.fromStationId = this.selectedStation.tableId
+      this.fromLineId = line.tableId
+      this.showConnectionModal = true
+    },
+
+    linesForStation(id) {
+      const station = this.stations.find(s => s.tableId === id)
+      return station ? station.lines : []
+    },
+
+    linesToStation(id) {
+      const station = this.stations.find(s => s.tableId === id)
+      return station ? station.lines : []
+    },
+
+    filterStations() {
+      const q = this.searchQuery.toLowerCase()
+      this.filteredStations = this.stations.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        (s.location || '').toLowerCase().includes(q) ||
+        s.voltageLevel.toString().includes(q)
+      )
+    },
+
+    async createConnection() {
+      try {
+        console.log(this.selectedStation);
+        let lineArr = this.selectedStation.lines.filter((line) => (line.tableId == this.fromLineId) || (line.tableId == this.toLineId))
+        if (lineArr) {
+          let resp
+          resp = await addConnection({
+            identifier: lineArr[0].id,
+            fromStationId: this.fromStationId,
+            fromLineId: this.fromLineId,
+            toStationId: this.toStationId,
+            toLineId: this.toLineId,
+            fromSide: this.fromSide,
+            toSide: this.toSide,
+          })
+        } else {
+          this.message = "cannot find the appropriate line";
+          console.log("lineArr", lineArr);
+          return;
+        }
+      } catch {
+        this.message = 'Save failed'
+        return;
+      }
+      this.selectedStation.lines.push({ name: this.name, voltageLevel: this.voltageLevel })
+      this.message = `Saved Connection`
+      this.modal = false
+      this.showConnectionModal = false
+    },
+
+    async fetchStations() {
+      try {
+        const stations = await getStations();
+        this.stations = stations;
+        console.log("stations:", stations)
+      } catch (err) {
+        console.log(err)
+      }
     }
-  } catch {
-    message.value = 'Save failed'
+
   }
 }
-
-const fetchStation = async (identifier) => {
-  selectedStation.value = await getStation(identifier)
-}
-
-const fetchStations = async () => {
-  try {
-    const stationsData = await getStations()
-    stations.value = stationsData
-    console.log("stations:", stationsData)
-  } catch (err) {
-    console.log(err)
-  }
-}
-
-// Lifecycle hooks
-onMounted(async () => {
-  console.log('Detail component mounted, stationId =', stationId)
-  if (stationId) {
-    try {
-      // await fetchStations()
-      await fetchStation(stationId)
-      console.log("selected station", selectedStation.value)
-    } catch {
-      error.value = `Failed to load station #${stationId}`
-    }
-  }
-  loading.value = false
-})
 </script>

@@ -1,4 +1,5 @@
 import api from './api';
+// import { Unit } from '@/types';
 
 export function createStation({ name, identifier, voltageLevel, display, type }:{ name: any, identifier: any, voltageLevel: any, display: any, type: string }) {
   return api.post('/stations', {
@@ -32,6 +33,14 @@ export function deleteStation(id: number) {
 
 export function addLine({stationId, name, identifier, voltageLevel }: {stationId: number, name: string, identifier: string, voltageLevel: number }){
   return api.post(`/lines`, {stationId, name, identifier, voltageLevel });
+}
+
+export function addUnit({stationId, name, identifier, inertia, active, voltageLevel }: {stationId: number, name: string, identifier: string, voltageLevel: number, inertia: number, active: boolean }){
+  return api.post(`/units`, {stationId, name, identifier, inertia, active, voltageLevel });
+}
+
+export function updateUnit(stationId:number, data:{name?: string, identifier?: string, voltageLevel?: number, inertia?: number, active?: boolean}){
+  return api.put(`/units/${stationId}`, data);
 }
 
 export function addConnection({identifier , fromStationId , fromLineId , toStationId ,toLineId, fromSide, toSide}: {identifier: number, fromStationId: number, fromLineId: number , toStationId: number ,toLineId: number, fromSide: string, toSide: string}){
