@@ -1,45 +1,41 @@
 <template>
-    <g class="line-group">
-          <g 
-            :transform="`translate(${line.x},${line.y})`"
-            @mousedown="(e) => startDrag(e, line, station)"
-            class="draggable-line"
-          >
-            <rect :width="lineWidth" :height="lineHeight" fill="#e0f0ff" stroke="#000" stroke-width="2" />
-            <text x="10" y="10" class="component-label line-name">{{ line.name || line.id }}</text>
-            <!-- <text x="5" y="25" class="component-label line-value" v-if="line.mw !== null && line.mw !== undefined">{{ line.mw }}  -->
-              <text x="5" y="25" class="component-label line-value">{{ liveData.mw }} 
-                <tspan class="unit-label">MW</tspan>
-            </text>
-            <text x="5" y="40" class="component-label line-value">{{ liveData.v }} 
-                <tspan class="unit-label">kV</tspan>
-            </text>
-            
-            <!-- Connection points (visible in connection mode) -->
-            <g v-if="connectionMode" class="connection-points">
-              <!-- Left connection point -->
-              <circle cx="0" cy="25" r="6" class="connection-point" :data-station-id="station.id" :data-line-id="line.id" :data-side="'left'"
-                @mousedown="(e) => startConnectionCreation(e, station, line, 'left')"
-              />
-              
-              <!-- Right connection point -->
-              <circle :cx="lineWidth" cy="25" r="6" class="connection-point" :data-station-id="station.id" :data-line-id="line.id" :data-side="'right'"
-                @mousedown="(e) => startConnectionCreation(e, station, line, 'right')"
-              />
-              
-              <!-- Top connection point -->
-              <circle :cx="lineWidth / 2" cy="0" r="6" class="connection-point" :data-station-id="station.id" :data-line-id="line.id" :data-side="'top'"
-                @mousedown="(e) => startConnectionCreation(e, station, line, 'top')"
-              />
-              
-              <!-- Bottom connection point -->
-              <circle :cx="lineWidth / 2" :cy="lineHeight" r="6" class="connection-point" :data-station-id="station.id" :data-line-id="line.id" :data-side="'bottom'"
-                @mousedown="(e) => startConnectionCreation(e, station, line, 'bottom')"
-              />
-            </g>
-          </g>
+  <g class="line-group">
+    <g :transform="`translate(${line.x},${line.y})`" @mousedown="(e) => startDrag(e, line, station)"
+      class="draggable-line">
+      <rect :width="lineWidth" :height="lineHeight" fill="#e0f0ff" stroke="#000" stroke-width="2" />
+      <text x="10" y="10" class="component-label line-name">{{ line.name || line.id }}</text>
+      <!-- <text x="5" y="25" class="component-label line-value" v-if="line.mw !== null && line.mw !== undefined">{{ line.mw }}  -->
+      <text x="5" y="25" class="component-label line-value">{{ liveData.mw }}
+        <tspan class="unit-label">MW</tspan>
+      </text>
+      <text x="5" y="40" class="component-label line-value">{{ liveData.v }}
+        <tspan class="unit-label">kV</tspan>
+      </text>
+
+      <!-- Connection points (visible in connection mode) -->
+      <g v-if="connectionMode" class="connection-points">
+        <!-- Left connection point -->
+        <circle cx="0" cy="25" r="6" class="connection-point" :data-station-id="station.id" :data-line-id="line.id"
+          :data-side="'left'" @mousedown="(e) => startConnectionCreation(e, station, line, 'left')" />
+
+        <!-- Right connection point -->
+        <circle :cx="lineWidth" cy="25" r="6" class="connection-point" :data-station-id="station.id"
+          :data-line-id="line.id" :data-side="'right'"
+          @mousedown="(e) => startConnectionCreation(e, station, line, 'right')" />
+
+        <!-- Top connection point -->
+        <circle :cx="lineWidth / 2" cy="0" r="6" class="connection-point" :data-station-id="station.id"
+          :data-line-id="line.id" :data-side="'top'"
+          @mousedown="(e) => startConnectionCreation(e, station, line, 'top')" />
+
+        <!-- Bottom connection point -->
+        <circle :cx="lineWidth / 2" :cy="lineHeight" r="6" class="connection-point" :data-station-id="station.id"
+          :data-line-id="line.id" :data-side="'bottom'"
+          @mousedown="(e) => startConnectionCreation(e, station, line, 'bottom')" />
+      </g>
     </g>
-        
+  </g>
+
 </template>
 
 <script setup lang="ts">
@@ -62,17 +58,18 @@ const props = defineProps<{
   font-size: 12px;
   font-weight: 100;
   /* fill: #333; */
-  pointer-events: none; /* Makes text non-interactive for mouse events */
+  pointer-events: none;
+  /* Makes text non-interactive for mouse events */
 }
 
 .line-name {
-    font-size: 8px;
-    font-weight: 200;
+  font-size: 8px;
+  font-weight: 100;
 }
 
 .line-value {
-    font-size: 8px;
-    font-weight: 200;
+  font-size: 8px;
+  font-weight: 200;
 }
 
 .unit-label {
@@ -100,6 +97,4 @@ const props = defineProps<{
   fill: #e74c3c;
   transform: scale(1.2);
 }
-
-
 </style>

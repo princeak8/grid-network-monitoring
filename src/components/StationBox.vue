@@ -205,8 +205,8 @@ const endConnectionCreation = (event: MouseEvent) => {
 }
 
 .station-name {
-  font-weight: bold;
-  font-size: 12px;
+  font-weight: normal;
+  font-size: 14px;
 }
 
 .grid-canvas {
