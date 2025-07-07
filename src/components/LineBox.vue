@@ -2,14 +2,14 @@
   <g class="line-group">
     <g :transform="`translate(${line.x},${line.y})`" @mousedown="(e) => startDrag(e, line, station)"
       class="draggable-line">
-      <rect :width="lineWidth" :height="lineHeight" fill="#e0f0ff" stroke="#000" stroke-width="2" />
-      <text x="10" y="10" class="component-label line-name">{{ line.name || line.id }}</text>
+      <rect :width="lineWidth" :height="lineHeight" fill="#e0f0ff" stroke="#000" stroke-width="1" />
+      <text x="10" y="10" class="component-label line-name" fill="#000" stroke="#000">{{ line.name || line.id }}</text>
       <!-- <text x="5" y="25" class="component-label line-value" v-if="line.mw !== null && line.mw !== undefined">{{ line.mw }}  -->
-      <text x="5" y="25" class="component-label line-value">{{ liveData.mw }}
-        <tspan class="unit-label">MW</tspan>
+      <text x="5" y="25" class="component-label line-value" fill="#000" stroke="#000">{{ liveData.mw }}
+        <tspan class="unit-label" fill="#000" stroke="#000">MW</tspan>
       </text>
-      <text x="5" y="40" class="component-label line-value">{{ liveData.v }}
-        <tspan class="unit-label">kV</tspan>
+      <text x="5" y="40" class="component-label line-value" fill="#000" stroke="#000">{{ liveData.v }}
+        <tspan class="unit-label" fill="#22c55e">kV</tspan>
       </text>
 
       <!-- Connection points (visible in connection mode) -->
@@ -59,21 +59,23 @@ const props = defineProps<{
   font-weight: 100;
   /* fill: #333; */
   pointer-events: none;
-  /* Makes text non-interactive for mouse events */
 }
 
 .line-name {
-  font-size: 8px;
-  font-weight: 100;
+  font-size: 10px;
+  font-weight: 700;
+  fill: #000;
 }
 
 .line-value {
-  font-size: 8px;
-  font-weight: 200;
+  font-size: 10px;
+  font-weight: 700;
+  fill: #000;
 }
 
 .unit-label {
-  font-size: 8px;
+  font-size: 9px;
+  fill: #000;
 }
 
 .draggable-line {
@@ -81,9 +83,8 @@ const props = defineProps<{
 }
 
 .draggable-line:hover rect {
-  fill: #c0e0ff;
+  fill: #bae6fd;
 }
-
 
 .connection-point {
   fill: #3498db;
