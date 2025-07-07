@@ -2,11 +2,27 @@
     <div class="container">
       
       <svg class="grid-canvas" :width="svgCanvas.width" :height="svgCanvas.height">
-        <!-- Grid background (optional) -->
-        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eee" stroke-width="1"/>
-        </pattern>
-        <rect width="100%" height="100%" fill="url(#grid)" />
+        <defs>
+          <linearGradient id="stationCardGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e0f7fa" stop-opacity="0.95"/>
+            <stop offset="100%" stop-color="#f0f9ff" stop-opacity="0.95"/>
+          </linearGradient>
+          <linearGradient id="stationHeaderGradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.18"/>
+          </linearGradient>
+          <!-- Modern grid pattern -->
+          <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" stroke-width="0.5"/>
+          </pattern>
+          <!-- Soft gradient overlay for background -->
+          <linearGradient id="gridBgGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fff" stop-opacity="0.7"/>
+            <stop offset="100%" stop-color="#e0f2fe" stop-opacity="0.5"/>
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" class="grid-blur" />
+        <rect width="100%" height="100%" fill="url(#gridBgGradient)" />
         <!-- Iterate through all stations -->
         
         <StationBox v-for="station in stations" :id="station.id" :stations="stations" :station="station" :startStationDrag="startStationDrag" :dragOffsetX="dragOffsetX" :dragOffsetY="dragOffsetY"
@@ -401,5 +417,9 @@
   
   .temp-connection-path {
     pointer-events: none;
+  }
+  
+  .grid-blur {
+    filter: blur(0.5px);
   }
   </style>

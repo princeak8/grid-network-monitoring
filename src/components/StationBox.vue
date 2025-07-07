@@ -1,32 +1,39 @@
 <template>
     <g  
-        class="station-group"
+        class="station-group station-card"
         :transform="`translate(${station.x},${station.y})`"
-        stroke="#000" 
-        fill="#e0f0ff"
-        stroke-width="2"
+        stroke="#e0e7ef" 
+        fill="none"
+        stroke-width="1.5"
       >
-        <!-- Outer station rectangle -->
+        <!-- Card background with shadow and rounded corners -->
         <rect 
           :width="station.width" 
           :height="station.height" 
-          class="station-rect"
+          rx="18" ry="18"
+          class="station-rect card-bg"
           @mousedown="(e) => startStationDrag(e, station)"
         />
-        <text x="3" y="10" class="component-label station-name">{{ station.name }}</text>
-
+        <!-- Header bar with icon, name, and status -->
+        <rect :width="station.width" height="32" rx="18" ry="18" class="station-header-bar" />
+        <g class="station-header-content">
+          <!-- Icon (power bolt) -->
+          <svg x="8" y="8" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M13 2L3 14H12L11 22L21 10H13L13 2Z" fill="#3b82f6"/>
+          </svg>
+          <!-- Station name -->
+          <text x="32" y="24" class="station-title" fill="#000">{{ station.name }}</text>
+          <!-- Status dot (green for now) -->
+          <circle :cx="station.width - 18" cy="18" r="7" :fill="'#22c55e'" class="status-dot" />
+        </g>
         <!-- Inner lines group -->
         <LineBox v-for="line in station.lines" :key="line.id" :line="line" :startDrag="startDrag" :startConnectionCreation="startConnectionCreation"  
             :connectionMode="connectionMode" :live-data="liveData.data[station.id]?.[line.id] || {}"
         />
-          
-        
         <!-- Resize handles -->
-        <rect :x="station.width - 6" :y="station.height / 2 - 15" width="12" height="30" fill="rgba(0,0,0,0.2)" class="resize-handle" @mousedown="(e) => startResize(e, station, 'width')" />
-        
-        <rect :x="station.width / 2 - 15" :y="station.height - 6" width="30" height="12" fill="rgba(0,0,0,0.2)" class="resize-handle" @mousedown="(e) => startResize(e, station, 'height')" />
-        
-        <rect :x="station.width - 12" :y="station.height - 12" width="12" height="12" fill="rgba(0,0,0,0.3)" class="resize-handle" @mousedown="(e) => startResize(e, station, 'corner')" />
+        <rect :x="station.width - 6" :y="station.height / 2 - 15" width="12" height="30" fill="rgba(0,0,0,0.08)" class="resize-handle" @mousedown="(e) => startResize(e, station, 'width')" />
+        <rect :x="station.width / 2 - 15" :y="station.height - 6" width="30" height="12" fill="rgba(0,0,0,0.08)" class="resize-handle" @mousedown="(e) => startResize(e, station, 'height')" />
+        <rect :x="station.width - 12" :y="station.height - 12" width="12" height="12" fill="rgba(0,0,0,0.15)" class="resize-handle" @mousedown="(e) => startResize(e, station, 'corner')" />
       </g>
 </template>
 
@@ -69,18 +76,17 @@ const startDrag = (event: MouseEvent, line: Line, station: Station) => {
   event.stopPropagation(); // Prevent event from bubbling up to station
   
   // Store the element being dragged and its parent station
-//   props.draggedElement.value = { line, station };
   emit('updateDraggedElement', { line, station });
   
-  // Calculate the offset within the element where the drag started
+  // Calculate the offset within the element where the drag started (SVG coordinates)
   if (event.target instanceof Element) {
     const svgRect = (event.target as SVGElement).ownerSVGElement?.getBoundingClientRect();
-    const elementRect = event.target.getBoundingClientRect();
-    
-    // dragOffsetX.value = event.clientX - elementRect.left;
-    // dragOffsetY.value = event.clientY - elementRect.top;
-    emit('updateDragOffsetX', event.clientX - elementRect.left)
-    emit('updateDragOffsetY', event.clientY - elementRect.top)
+    // Mouse position relative to SVG
+    const mouseSvgX = event.clientX - svgRect.left;
+    const mouseSvgY = event.clientY - svgRect.top;
+    // Offset from mouse to line's top-left in SVG coordinates
+    emit('updateDragOffsetX', mouseSvgX - (props.station.x + line.x));
+    emit('updateDragOffsetY', mouseSvgY - (props.station.y + line.y));
   }
   
   // Add event listeners for dragging and dropping
@@ -92,15 +98,16 @@ const startDrag = (event: MouseEvent, line: Line, station: Station) => {
 const drag = (event: MouseEvent) => {
   if (props.draggedElement) {
     const { line, station } = props.draggedElement;
-    
-    // Calculate new position (accounting for station position)
-    const newX = event.clientX - props.dragOffsetX - props.station.x;
-    const newY = event.clientY - props.dragOffsetY - props.station.y;
-    
+    // Get mouse position in SVG coordinates
+    const svgRect = (event.target as SVGElement)?.ownerSVGElement?.getBoundingClientRect() || document.querySelector('svg')?.getBoundingClientRect();
+    const mouseSvgX = event.clientX - svgRect.left;
+    const mouseSvgY = event.clientY - svgRect.top;
+    // Calculate new position in station coordinates
+    const newX = mouseSvgX - props.station.x - props.dragOffsetX;
+    const newY = mouseSvgY - props.station.y - props.dragOffsetY;
     // Enforce boundaries within the station
     const boundedX = Math.max(stationPadding, Math.min(newX, props.station.width - lineWidth - stationPadding));
     const boundedY = Math.max(stationPadding, Math.min(newY, props.station.height - lineHeight - stationPadding));
-    
     // Update line position
     line.x = boundedX;
     line.y = boundedY;
@@ -198,6 +205,38 @@ const endConnectionCreation = (event: MouseEvent) => {
 </script>
 
 <style scoped>
+.station-card {
+  /* Remove filter and transform from the group to prevent hover glitches */
+}
+.card-bg {
+  fill: url(#stationCardGradient);
+  stroke: #e0e7ef;
+  filter: drop-shadow(0 4px 16px rgba(56, 189, 248, 0.10)) drop-shadow(0 1.5px 6px rgba(30, 41, 59, 0.10));
+  transition: filter 0.2s, fill 0.2s;
+}
+.card-bg:hover {
+  filter: drop-shadow(0 8px 24px rgba(56, 189, 248, 0.18)) drop-shadow(0 3px 12px rgba(30, 41, 59, 0.18));
+  fill: url(#stationCardGradient);
+}
+.station-header-bar {
+  fill: url(#stationHeaderGradient);
+  stroke: none;
+}
+.station-header-content {
+  pointer-events: none;
+}
+.station-title {
+  font-family: 'Inter', 'Roboto', Arial, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  fill: #000;
+  letter-spacing: 0.01em;
+  dominant-baseline: middle;
+}
+.status-dot {
+  stroke: #fff;
+  stroke-width: 2;
+}
 .component-label {
   font-size: 14px;
   fill: #333;
@@ -205,8 +244,8 @@ const endConnectionCreation = (event: MouseEvent) => {
 }
 
 .station-name {
-  font-weight: bold;
-  font-size: 12px;
+  font-weight: normal;
+  font-size: 14px;
 }
 
 .grid-canvas {

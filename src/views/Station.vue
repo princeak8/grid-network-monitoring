@@ -187,7 +187,7 @@
       </div> -->
 
       <section v-if="modal"
-        class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center ">
+        class="fixed w-full h-screen bg-gray-200 bg-opacity-20 inset-0 flex items-center justify-center z-20">
         <el-card class="max-w-sm mx-auto w-[30rem]">
           <template #header>
             <h2>Add Line</h2>
@@ -287,10 +287,18 @@
 
         </el-card>
       </section>
+
+      <el-dialog v-model="showNoIdenticalLineModal" title="No Identical Line" width="400px" :close-on-click-modal="false">
+        <span>There is no identical line on the selected station. Would you like to create one for the 'To Station'?</span>
+        <template #footer>
+          <el-button @click="showNoIdenticalLineModal = false">Cancel</el-button>
+          <el-button type="primary" @click="openAddLineForToStation">Create Line</el-button>
+        </template>
+      </el-dialog>
     </div>
 
     <section v-if="showConnectionModal"
-      class="fixed inset-0 flex items-center justify-center bg-gray-200 bg-opacity-20 z-50">
+      class="fixed inset-0 flex items-center justify-center bg-gray-200 bg-opacity-20">
       <el-card class="w-full max-w-2xl p-6">
         <template #header>
           <h2 class="text-xl font-semibold">Create Connection</h2>
@@ -395,7 +403,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getStation, addLine, addConnection, deleteStation, getStations, addTransformer } from '@/services/stationService'
 import { Plus, SplinePointer, ArrowRight } from 'lucide-vue-next'
@@ -436,6 +444,10 @@ const typeOfCooling = ref('')
 const voltageRating = ref('')
 const manufactureYear = ref(null)
 const installationYear = ref(null)
+const showNoIdenticalLineModal = ref(false)
+const pendingToStationId = ref('')
+const pendingFromLineName = ref('')
+const currentStationId = ref(null)
 
 // Computed properties
 const computedStationId = computed(() => route.params.id)
@@ -447,11 +459,21 @@ const submit = async () => {
       name: name.value,
       identifier: identifier.value,
       voltageLevel: voltageLevel.value,
-      stationId: selectedStation.value.tableId,
+      stationId: currentStationId.value || selectedStation.value.tableId,
     })
-    selectedStation.value.lines.push({ name: name.value, voltageLevel: voltageLevel.value })
+    // Find the station to add the line to
+    const station = stations.value.find(s => s.tableId === (currentStationId.value || selectedStation.value.tableId));
+    if (station) {
+      const newLine = { name: name.value, voltageLevel: voltageLevel.value, tableId: resp.data.id };
+      if (!station.lines) station.lines = [];
+      station.lines.push(newLine);
+      // If this was for the To Station and matches the pending name, auto-select it
+      if (pendingToStationId.value && pendingFromLineName.value && station.tableId === pendingToStationId.value && name.value === pendingFromLineName.value) {
+        toLineId.value = newLine.tableId;
+      }
+    }
     modal.value = false
-    message.value = `Created station #${resp.data.id}`
+    message.value = `Created line #${resp.data.id}`
   } catch {
     message.value = 'Save failed'
   }
@@ -511,11 +533,21 @@ const viewStation = (id) => {
   router.push({ name: 'Station', params: { id } })
 }
 
-const openModal = (line) => {
+const openModal = async (line) => {
+  if (!stations.value.length) {
+    await fetchStations();
+  }
   fromStationId.value = selectedStation.value.tableId
   fromLineId.value = line.tableId
   showConnectionModal.value = true
 }
+
+// Watch for modal open to preselect station if not set
+watch(showConnectionModal, (val) => {
+  if (val && !fromStationId.value && selectedStation.value) {
+    fromStationId.value = selectedStation.value.tableId;
+  }
+});
 
 const linesForStation = (id) => {
   const station = stations.value.find(s => s.tableId === id)
@@ -580,9 +612,9 @@ const fetchStations = async () => {
 // Lifecycle hooks
 onMounted(async () => {
   console.log('Detail component mounted, stationId =', stationId)
+  await fetchStations();
   if (stationId) {
     try {
-      // await fetchStations()
       await fetchStation(stationId)
       console.log("selected station", selectedStation.value)
     } catch {
@@ -591,4 +623,52 @@ onMounted(async () => {
   }
   loading.value = false
 })
+
+// Watch for changes to toStationId
+watch(toStationId, (newToStationId) => {
+  if (!newToStationId) return;
+  // Get the selected from line name
+  const fromLine = linesForStation(fromStationId.value).find(line => line.tableId === fromLineId.value);
+  if (!fromLine) return;
+  // Try to find a line in the to station with the same name
+  const toLines = linesToStation(newToStationId);
+  const identicalLine = toLines.find(line => line.name === fromLine.name);
+  if (identicalLine) {
+    toLineId.value = identicalLine.tableId;
+  } else {
+    toLineId.value = '';
+    pendingToStationId.value = newToStationId;
+    pendingFromLineName.value = fromLine.name;
+    showNoIdenticalLineModal.value = true;
+  }
+});
+
+// Add Line modal logic for To Station
+const openAddLineForToStation = () => {
+  // Set up modal for adding a line to the To Station
+  isEditMode.value = false;
+  currentStationId.value = pendingToStationId.value;
+  name.value = pendingFromLineName.value;
+  // Find the from line and use its identifier if available
+  const fromLine = linesForStation(fromStationId.value).find(line => line.name === pendingFromLineName.value || line.tableId === fromLineId.value);
+  identifier.value = fromLine && fromLine.identifier ? fromLine.identifier : '';
+  voltageLevel.value = null;
+  display.value = true;
+  modal.value = true;
+  showNoIdenticalLineModal.value = false;
+};
+
+// After adding a line, if it matches the pending name, auto-select it in To Line
+watch(modal, (val) => {
+  if (!val && pendingToStationId.value && pendingFromLineName.value) {
+    // Modal just closed, try to select the new line
+    const toLines = linesToStation(pendingToStationId.value);
+    const newLine = toLines.find(line => line.name === pendingFromLineName.value);
+    if (newLine) {
+      toLineId.value = newLine.tableId;
+    }
+    pendingToStationId.value = '';
+    pendingFromLineName.value = '';
+  }
+});
 </script>
