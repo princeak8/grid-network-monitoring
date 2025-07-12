@@ -1,7 +1,7 @@
 <template>
     <div class="container">
       
-      <svg class="grid-canvas" :width="svgCanvas.width" :height="svgCanvas.height">
+      <svg class="grid-canvas" width="100%" height="100%" viewBox="0 0 1920 1080" preserveAspectRatio="xMinYMin meet">
         <defs>
           <linearGradient id="stationCardGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#e0f7fa" stop-opacity="0.95"/>
@@ -353,11 +353,11 @@
   }
   
   .container {
-    /* overflow: auto; */
     width: 100%;
     height: 100%;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   
   .toolbar {

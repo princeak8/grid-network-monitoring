@@ -20,23 +20,23 @@
       
       <div class="nav-links">
         <router-link to="/dashboard" class="nav-link">
-          <span class="nav-icon">📊</span>
+          <BarChart3 class="nav-icon" />
           <span class="nav-text" v-if="!sidebarCollapsed">Dashboard</span>
         </router-link>
         <router-link to="/grid-map" class="nav-link">
-          <span class="nav-icon">🗺️</span>
+          <Map class="nav-icon" />
           <span class="nav-text" v-if="!sidebarCollapsed">Grid Map</span>
         </router-link>
         <router-link to="/stations" class="nav-link">
-          <span class="nav-icon">⚡</span>
+          <Zap class="nav-icon" />
           <span class="nav-text" v-if="!sidebarCollapsed">Stations</span>
         </router-link>
         <router-link to="/visualizations" class="nav-link">
-          <span class="nav-icon">🗺️</span>
+          <Map class="nav-icon" />
           <span class="nav-text" v-if="!sidebarCollapsed">Visualizations</span>
         </router-link>
         <router-link to="/outages" class="nav-link">
-          <span class="nav-icon">🚨</span>
+          <AlertTriangle class="nav-icon" />
           <span class="nav-text" v-if="!sidebarCollapsed">Outages</span>
         </router-link>
       </div>
@@ -50,7 +50,7 @@
           </div>
         </div>
         <button class="logout-button" @click="logout">
-          <span class="logout-icon">🚪</span>
+          <LogOut class="logout-icon" />
           <span v-if="!sidebarCollapsed" class="logout-text">Logout</span>
         </button>
       </div>
@@ -85,6 +85,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from './stores/auth';
 import { useLiveDataStore } from '@/stores/liveData';
+import { BarChart3, Map, Zap, AlertTriangle, LogOut } from 'lucide-vue-next';
 
 const store = useLiveDataStore();
 
@@ -226,7 +227,7 @@ onBeforeUnmount(() => {
 });
 </script>
 
-<style>
+<style scoped>
 /* Global styles */
 * {
   margin: 0;
@@ -282,7 +283,7 @@ body {
 }
 
 .app-logo h1 {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -317,8 +318,8 @@ body {
 }
 
 .nav-icon {
-  font-size: 1.2rem;
-  min-width: 24px;
+  font-size: 1rem;
+  min-width: 20px;
   text-align: center;
 }
 
@@ -348,13 +349,14 @@ body {
 
 .user-name {
   font-weight: 500;
+  font-size: 0.85rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .user-role {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #a0aec0;
 }
 
@@ -413,7 +415,7 @@ body {
 }
 
 .page-title {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 500;
 }
 
@@ -427,7 +429,7 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .status-indicator {
@@ -454,7 +456,7 @@ body {
 
 .current-time {
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .page-content {
